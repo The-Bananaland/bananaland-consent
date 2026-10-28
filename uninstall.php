@@ -9,4 +9,5 @@ if (!empty($blc_settings['uninstall']['delete_data'])) {
     delete_option('blc_settings');
     delete_option('blc_db_version');
     delete_option('blc_geo_source');
+    delete_option('blc_link_seen');
 }

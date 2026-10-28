@@ -46,6 +46,10 @@ function blc_preferences_link(array $args = []): string
 {
     $view = View::instance();
     $args = wp_parse_args($args, ['class' => 'blc-link']);
+    // Remembered (at most daily) so the Overview can confirm the site has the required link.
+    if (!defined('BLC_E2E') && !is_admin() && !wp_doing_ajax() && !(defined('REST_REQUEST') && REST_REQUEST) && (int) get_option('blc_link_seen') < time() - DAY_IN_SECONDS) {
+        update_option('blc_link_seen', time(), false);
+    }
     $icon = Locator::render('privacy-choices-icon');
     return sprintf(
         '<a href="#blc-preferences" class="%1$s" data-blc-action="open-preferences" data-blc="preferences-link" data-blc-label-default="%2$s" data-blc-label-opt-out="%3$s"><span class="blc-link__icon" hidden>%4$s</span><span class="blc-link__label">%2$s</span></a>',

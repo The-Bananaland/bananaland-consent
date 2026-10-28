@@ -331,10 +331,18 @@ final class Admin
                 $location['country'] . ($location['region'] ? '-' . $location['region'] : '')
             )));
         } else {
-            self::status(null, __('Visitor location', 'bananaland-consent'), esc_html__('This server doesn\'t provide it (normal on a local site). Visitors are placed by their browser\'s time zone; anyone who can\'t be placed gets the "ask first" banner. On WP Engine, turn on GeoTarget, or use Cloudflare.', 'bananaland-consent'));
+            self::status(null, __('Visitor location', 'bananaland-consent'), esc_html__('Not available on this server, which is normal for a local site. Visitors are placed by their browser\'s time zone instead. On the live site, turn on WP Engine GeoTarget (or use Cloudflare) for exact locations.', 'bananaland-consent'));
+        }
+        $seen = (int) get_option('blc_link_seen');
+        $in_menu = (bool) get_posts(['post_type' => 'nav_menu_item', 'posts_per_page' => 1, 'fields' => 'ids', 'meta_query' => [['key' => '_menu_item_url', 'value' => '#blc-preferences', 'compare' => 'LIKE']]]);
+        if ($seen > time() - 30 * DAY_IN_SECONDS || $in_menu) {
+            self::status(true, __('"Cookie preferences" link', 'bananaland-consent'), esc_html__('Found on the site, so visitors can change their choices at any time.', 'bananaland-consent'));
+        } elseif (Config::get('banner.floating_button')) {
+            self::status(true, __('"Cookie preferences" link', 'bananaland-consent'), esc_html__('The floating button lets visitors change their choices at any time.', 'bananaland-consent'));
+        } else {
+            self::status(false, __('"Cookie preferences" link', 'bananaland-consent'), esc_html__('Not found yet. The law requires a way to change choices later, usually a footer link. Add a menu item linking to #blc-preferences, or turn on the floating button under Banner.', 'bananaland-consent') . ' <details class="blc-dev-note"><summary>' . esc_html__('For developers', 'bananaland-consent') . '</summary><code>&lt;?php echo blc_preferences_link(); ?&gt;</code> ' . esc_html__('or the', 'bananaland-consent') . ' <code>[blc_preferences_link]</code> ' . esc_html__('shortcode.', 'bananaland-consent') . '</details>');
         }
         echo '</ul>';
-        echo '<p class="blc-muted">' . wp_kses_post(__('Every page needs a link that reopens these choices, usually in the footer: <code>&lt;?php echo blc_preferences_link(); ?&gt;</code> or the <code>[blc_preferences_link]</code> shortcode.', 'bananaland-consent')) . '</p>';
         echo '</section>';
 
         // Ask again

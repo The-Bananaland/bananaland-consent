@@ -36,3 +36,7 @@
 .blc-details__body { padding: 0 16px 8px; }
 .blc-details__body h3 { margin-top: 1.5em; }
 .blc-tools-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+
+.blc-dev-note { margin-top: 4px; color: #646970; }
+.blc-dev-note summary { cursor: pointer; }
+.blc-dev-note code { font-size: 12px; }

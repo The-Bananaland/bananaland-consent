@@ -6,6 +6,9 @@
 
 defined('ABSPATH') || exit;
 
+// Keeps test pages from marking the footer link as present on the real site.
+define('BLC_E2E', true);
+
 add_filter('blc_config', static function (array $config): array {
     $config['services_live_only'] = false;
     $config['services'] = [
