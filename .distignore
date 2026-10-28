@@ -1,0 +1,17 @@
+/.git
+/.github
+/docs
+/tests
+/node_modules
+/vendor
+/.phpunit.cache
+/test-results
+/playwright-report
+.gitignore
+.distignore
+composer.json
+composer.lock
+package.json
+package-lock.json
+phpunit.xml.dist
+playwright.config.js

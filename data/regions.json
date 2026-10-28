@@ -1,0 +1,14 @@
+{
+  "_comment": "Default consent model by location. Subdivisions (ISO 3166-2) win over countries. Sites override per region in Consent > Regions or via the blc_config filter.",
+  "updated": "2026-10-28",
+  "opt_in": {
+    "countries": ["AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE","IS","LI","NO","GB","CH","BR"],
+    "subdivisions": ["CA-QC"]
+  },
+  "opt_out": {
+    "countries": ["US"],
+    "subdivisions": []
+  },
+  "default": "notice",
+  "us_privacy_states": ["CA","VA","CO","CT","UT","TX","OR","MT","IA","DE","NH","NJ","NE","TN","MN","MD","IN","KY","RI"]
+}
