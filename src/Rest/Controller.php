@@ -15,7 +15,8 @@ use WP_REST_Response;
  */
 final class Controller
 {
-    public const RATE_LIMIT = 20; // per IP per window
+    // Per IP per window. Generous because offices and campuses share one IP; it only needs to stop floods.
+    public const RATE_LIMIT = 300;
 
     public const RATE_WINDOW = 600;
 
