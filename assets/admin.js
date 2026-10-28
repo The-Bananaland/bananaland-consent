@@ -122,6 +122,12 @@
     });
   }
 
+  function esc(value) {
+    var div = document.createElement('div');
+    div.textContent = String(value);
+    return div.innerHTML;
+  }
+
   function render(reports) {
     var hosts = {};
     var cookies = {};
@@ -137,16 +143,16 @@
     var rows = '';
     Object.keys(hosts).forEach(function (h) {
       var known = declaredHosts.indexOf(h) > -1;
-      rows += '<tr><td><code>' + h + '</code></td><td>' + (known ? 'Declared service (loads before consent: check it is meant to, e.g. Tag Manager)' : '<strong>Not declared</strong>') + '</td></tr>';
+      rows += '<tr><td><code>' + esc(h) + '</code></td><td>' + (known ? 'Declared service (loads before consent: check it is meant to, e.g. Tag Manager)' : '<strong>Not declared</strong>') + '</td></tr>';
     });
     Object.keys(cookies).forEach(function (c) {
       if (!declaredCookie(c)) {
-        rows += '<tr><td><code>' + c + '</code> (cookie)</td><td><strong>Not declared.</strong> It may have been set earlier in your own browser; re-check in a private window.</td></tr>';
+        rows += '<tr><td><code>' + esc(c) + '</code> (cookie)</td><td><strong>Not declared.</strong> It may have been set earlier in your own browser; re-check in a private window.</td></tr>';
       }
     });
     results.innerHTML = rows
       ? '<table class="widefat striped"><thead><tr><th>Item</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>'
-      : '<div class="notice notice-success inline"><p>' + data.i18n.clean + '</p></div>';
+      : '<div class="notice notice-success inline"><p>' + esc(data.i18n.clean) + '</p></div>';
     results.insertAdjacentHTML('beforeend', '<p class="description">Pages scanned: ' + reports.length + '</p>');
   }
 

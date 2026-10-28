@@ -120,10 +120,58 @@ final class Controller
         ];
     }
 
+    /**
+     * Cloudflare's published edge ranges (https://www.cloudflare.com/ips/).
+     */
+    public const CLOUDFLARE_RANGES = [
+        '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18',
+        '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22', '198.41.128.0/17',
+        '162.158.0.0/15', '104.16.0.0/13', '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
+        '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32', '2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32',
+    ];
+
+    /**
+     * Visitor IP. CF-Connecting-IP is only trusted when the request really comes from Cloudflare,
+     * so it can't be spoofed to dodge the rate limit on a directly reachable origin.
+     */
     public static function client_ip(): string
     {
-        $ip = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '');
+        $remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+        $ip = $remote;
+        $cf = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? '');
+        if ($cf !== '' && filter_var($cf, FILTER_VALIDATE_IP) && self::in_ranges($remote, self::CLOUDFLARE_RANGES)) {
+            $ip = $cf;
+        }
         return (string) apply_filters('blc_client_ip', $ip);
+    }
+
+    public static function in_ranges(string $ip, array $ranges): bool
+    {
+        $packed = @inet_pton($ip);
+        if ($packed === false) {
+            return false;
+        }
+        foreach ($ranges as $range) {
+            [$subnet, $bits] = explode('/', $range);
+            $net = @inet_pton($subnet);
+            if ($net === false || strlen($net) !== strlen($packed)) {
+                continue;
+            }
+            $bits = (int) $bits;
+            $bytes = intdiv($bits, 8);
+            $rest = $bits % 8;
+            if (strncmp($packed, $net, $bytes) !== 0) {
+                continue;
+            }
+            if ($rest === 0) {
+                return true;
+            }
+            $mask = (0xff << (8 - $rest)) & 0xff;
+            if ((ord($packed[$bytes]) & $mask) === (ord($net[$bytes]) & $mask)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static function within_rate_limit(string $ip_hash): bool

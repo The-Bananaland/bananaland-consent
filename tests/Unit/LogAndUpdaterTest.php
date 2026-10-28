@@ -86,4 +86,21 @@ final class LogAndUpdaterTest extends TestCase
         symlink($plain, $link);
         $this->assertTrue(GitHubUpdater::is_dev_install($link));
     }
+
+    public function test_cloudflare_header_only_trusted_from_cloudflare(): void
+    {
+        $server = $_SERVER;
+        $_SERVER['HTTP_CF_CONNECTING_IP'] = '198.51.100.9';
+
+        $_SERVER['REMOTE_ADDR'] = '203.0.113.5'; // direct hit on the origin
+        $this->assertSame('203.0.113.5', Controller::client_ip());
+
+        $_SERVER['REMOTE_ADDR'] = '172.70.1.2'; // Cloudflare edge (172.64.0.0/13)
+        $this->assertSame('198.51.100.9', Controller::client_ip());
+
+        $_SERVER['REMOTE_ADDR'] = '2606:4700:10::ac43:1';
+        $this->assertSame('198.51.100.9', Controller::client_ip());
+
+        $_SERVER = $server;
+    }
 }
