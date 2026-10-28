@@ -34,7 +34,7 @@ final class Resolver
         if (!$allowed) {
             return null;
         }
-        $raw = $_SERVER['HTTP_X_BLC_TEST_REGION'] ?? ($_GET['blc_test_region'] ?? null);
+        $raw = ($_SERVER['HTTP_X_BLC_TEST_REGION'] ?? '') ?: ($_GET['blc_test_region'] ?? null); // phpcs:ignore WordPress.Security.NonceVerification
         if (!is_string($raw) || !preg_match('/^([A-Za-z]{2})(?:-([A-Za-z0-9]{1,3}))?$/', $raw, $m)) {
             return null;
         }

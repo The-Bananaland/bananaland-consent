@@ -59,3 +59,14 @@ test.describe('notice region', () => {
     await expect.poll(() => hit(trackers, /gtag\/js/)).toBe(true);
   });
 });
+
+test.describe('query-string test region', () => {
+  test.use({ region: '' });
+
+  test('?blc_test_region on the page reaches the region endpoint', async ({ page }) => {
+    await page.goto('/?blc_test_region=US-CT');
+    await expect(page.locator('[data-blc="banner"] [data-blc-show-for="opt-out"]')).toBeVisible();
+    await page.goto('/?blc_test_region=DE');
+    await expect(page.locator('[data-blc="banner"] [data-blc-show-for="opt-in"]')).toBeVisible();
+  });
+});

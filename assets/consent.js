@@ -212,7 +212,13 @@
   }
 
   function resolveMode() {
+    // Local/dev testing: ?blc_test_region=DE on the page is passed through and bypasses the cached region.
+    var testRegion = (location.search.match(/[?&]blc_test_region=([A-Za-z0-9-]{2,6})/) || [])[1];
+    var regionUrl = cfg.rest.region + (testRegion ? (cfg.rest.region.indexOf('?') > -1 ? '&' : '?') + 'blc_test_region=' + testRegion : '');
     try {
+      if (testRegion) {
+        throw new Error('test region');
+      }
       var cached = JSON.parse(decodeURIComponent(readCookie(REGION_COOKIE) || ''));
       if (cached && ['opt-in', 'opt-out', 'notice'].indexOf(cached.m) > -1) {
         region = cached.r || '';
@@ -223,11 +229,13 @@
     }
 
     function remember(m) {
-      writeCookie(REGION_COOKIE, JSON.stringify({ m: m, r: region }), 1);
+      if (!testRegion) {
+        writeCookie(REGION_COOKIE, JSON.stringify({ m: m, r: region }), 1);
+      }
       return m;
     }
 
-    return fetch(cfg.rest.region, { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    return fetch(regionUrl, { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' }, body: '{}' })
       .then(function (r) {
         if (!r.ok) {
           throw new Error('region ' + r.status);

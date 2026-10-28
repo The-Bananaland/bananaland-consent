@@ -133,7 +133,10 @@ final class Controller
         }
         $key = 'blc_rl_' . substr($ip_hash, 0, 32);
         $count = (int) get_transient($key);
-        if ($count >= self::RATE_LIMIT) {
+        /**
+         * Filters how many choices one (hashed) IP may log per 10 minutes.
+         */
+        if ($count >= (int) apply_filters('blc_rate_limit', self::RATE_LIMIT)) {
             return false;
         }
         set_transient($key, $count + 1, self::RATE_WINDOW);

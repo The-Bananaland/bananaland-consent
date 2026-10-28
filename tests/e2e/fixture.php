@@ -19,6 +19,9 @@ add_filter('blc_config', static function (array $config): array {
     return $config;
 });
 
+// Every test run logs choices from the same IP.
+add_filter('blc_rate_limit', static fn() => 100000);
+
 add_action('template_redirect', static function () {
     if (($_GET['blc_e2e'] ?? '') !== 'embed') {
         return;

@@ -90,4 +90,12 @@ final class RegionsTest extends TestCase
         $_SERVER['HTTP_X_BLC_TEST_REGION'] = 'US-CA';
         $this->assertSame(['country' => 'US', 'region' => 'CA', 'source' => 'test'], Resolver::resolve());
     }
+
+    public function test_empty_test_header_falls_back_to_query(): void
+    {
+        Functions\when('wp_get_environment_type')->justReturn('local');
+        $_SERVER['HTTP_X_BLC_TEST_REGION'] = '';
+        $_GET['blc_test_region'] = 'DE';
+        $this->assertSame('DE', Resolver::resolve()['country']);
+    }
 }
