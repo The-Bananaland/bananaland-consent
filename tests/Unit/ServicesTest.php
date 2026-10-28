@@ -43,6 +43,18 @@ final class ServicesTest extends TestCase
         $this->assertStringNotContainsString('<script async', $out);
     }
 
+    public function test_live_only_skips_services_outside_production(): void
+    {
+        Functions\when('wp_get_environment_type')->justReturn('staging');
+        $this->services([['uid' => 'ga', 'preset' => 'ga4', 'settings' => ['id' => 'G-ABC1234']]]);
+        $this->assertSame([], Registry::all());
+
+        $this->saved['services_live_only'] = false;
+        Config::reset();
+        Registry::reset();
+        $this->assertArrayHasKey('ga', Registry::all());
+    }
+
     public function test_invalid_id_is_skipped_with_error(): void
     {
         $this->services([['preset' => 'ga4', 'settings' => ['id' => 'UA-123']]]);

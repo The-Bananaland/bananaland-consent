@@ -55,6 +55,22 @@ final class ConfigTest extends TestCase
         $this->assertSame('bar', Config::get('banner.layout'));
     }
 
+    public function test_theme_services_are_added_to_admin_services(): void
+    {
+        $dir = sys_get_temp_dir() . '/blc-theme-' . uniqid();
+        mkdir($dir . '/consent', 0777, true);
+        file_put_contents($dir . '/consent/config.php', "<?php return ['services' => [['uid' => 'gtm', 'preset' => 'gtm']]];");
+        Functions\when('get_stylesheet_directory')->justReturn($dir);
+        Functions\when('get_option')->justReturn([
+            'services' => [['uid' => 'gtm', 'preset' => 'ga4'], ['uid' => 'meta', 'preset' => 'meta_pixel']],
+        ]);
+
+        $services = Config::get('services');
+        $this->assertSame(['gtm', 'meta'], array_column($services, 'uid'));
+        $this->assertSame('gtm', $services[0]['preset'], 'The theme wins when both use the same uid.');
+        $this->assertSame(['gtm'], array_column(Config::theme_services(), 'uid'));
+    }
+
     public function test_get_returns_default_for_unknown_path(): void
     {
         Functions\when('get_option')->justReturn([]);

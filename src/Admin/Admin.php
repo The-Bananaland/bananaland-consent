@@ -310,11 +310,14 @@ final class Admin
             self::status(false, __('Privacy policy', 'bananaland-consent'), sprintf('<a href="%s">%s</a>', esc_url(self::url('settings')), esc_html__('Choose the page', 'bananaland-consent')));
         }
 
-        if ($services) {
+        $configured = count(Config::get('services', []));
+        if (!Registry::runs_here() && $configured) {
+            self::status(null, __('Services', 'bananaland-consent'), sprintf('<a href="%s">%s</a>', esc_url(self::url('services')), esc_html__('Set to run on the live site only, so none load here.', 'bananaland-consent')));
+        } elseif ($services) {
             $names = implode(', ', array_map(static fn($s) => $s['label'], $services));
-            self::status(true, __('Services', 'bananaland-consent'), esc_html($names) . ($theme_services ? ' <span class="blc-muted">' . esc_html__('(set by the theme)', 'bananaland-consent') . '</span>' : ''));
+            self::status(true, __('Services', 'bananaland-consent'), sprintf('<a href="%s">%s</a>', esc_url(self::url('services')), esc_html($names)));
         } elseif ($theme_services) {
-            self::status(true, __('Services', 'bananaland-consent'), esc_html__('Set by the theme; none load in this environment.', 'bananaland-consent'));
+            self::status(true, __('Services', 'bananaland-consent'), sprintf('<a href="%s">%s</a>', esc_url(self::url('services')), esc_html__('The theme adds its services on the live site only. Add others here.', 'bananaland-consent')));
         } else {
             self::status(false, __('Services', 'bananaland-consent'), sprintf('<a href="%s">%s</a>', esc_url(self::url('services')), esc_html__('Add the trackers this site uses', 'bananaland-consent')));
         }
@@ -497,26 +500,42 @@ final class Admin
     private static function tab_services(): void
     {
         $presets = Presets::all();
-        if (self::theme_value('services') !== null) {
-            self::section(__('Services', 'bananaland-consent'), __('This theme manages its services in code (<code>consent/config.php</code>), so they can\'t be edited here.', 'bananaland-consent'));
-            $services = Registry::all();
-            if (!$services) {
-                echo '<p>' . esc_html__('None load in this environment. Themes usually limit trackers to the live site.', 'bananaland-consent') . '</p>';
-            } else {
-                echo '<table class="widefat striped"><thead><tr><th>' . esc_html__('Service', 'bananaland-consent') . '</th><th>' . esc_html__('ID', 'bananaland-consent') . '</th><th>' . esc_html__('Category', 'bananaland-consent') . '</th></tr></thead><tbody>';
-                foreach ($services as $s) {
-                    printf('<tr><td>%s</td><td><code>%s</code></td><td>%s</td></tr>', esc_html($s['label']), esc_html((string) ($s['settings']['id'] ?? '')), esc_html((string) Config::get("categories.{$s['category']}.label")));
-                }
-                echo '</tbody></table>';
+        $theme_rows = Config::theme_services();
+        if ($theme_rows) {
+            self::section(__('Added by the theme', 'bananaland-consent'), __('These are set in the theme\'s <code>consent/config.php</code> and deploy with the code, so they\'re edited there. Add anything else below.', 'bananaland-consent'));
+            echo '<table class="widefat striped blc-theme-services"><thead><tr><th>' . esc_html__('Service', 'bananaland-consent') . '</th><th>' . esc_html__('ID', 'bananaland-consent') . '</th><th>' . esc_html__('Category', 'bananaland-consent') . '</th></tr></thead><tbody>';
+            foreach ($theme_rows as $row) {
+                $preset = $presets[$row['preset'] ?? ''] ?? null;
+                $category = (string) ($row['category'] ?? ($preset['category'] ?? ''));
+                printf(
+                    '<tr><td>%s</td><td><code>%s</code></td><td>%s</td></tr>',
+                    esc_html((string) (($row['label'] ?? '') ?: ($preset['label'] ?? ($row['preset'] ?? '')))),
+                    esc_html((string) ($row['settings']['id'] ?? '')),
+                    esc_html((string) Config::get("categories.$category.label", $category))
+                );
             }
-            return;
+            echo '</tbody></table>';
         }
 
         self::form_open('services');
         $rows = (array) self::value('services');
         $can_html = current_user_can('unfiltered_html');
 
-        echo '<p class="blc-section-intro">' . esc_html__('Add each tracker or outside tool the site uses. Each one only loads once the visitor allows its category.', 'bananaland-consent') . '</p>';
+        if ($theme_rows) {
+            self::section(__('Added here', 'bananaland-consent'));
+        }
+        echo '<p class="blc-section-intro">' . esc_html__('Add each tracker or marketing tag the site uses: pick a type and paste its ID, or choose Custom to paste any code snippet. Each one only loads once the visitor allows its category.', 'bananaland-consent') . '</p>';
+        echo '<table class="form-table">';
+        self::row(
+            __('Where they run', 'bananaland-consent'),
+            self::checkbox('services_live_only', __('Only on the live site', 'bananaland-consent')),
+            sprintf(
+                /* translators: %s: environment type */
+                __('Keeps local and staging copies, which share this database, from sending visits to analytics and ad accounts. This environment is <code>%s</code>.', 'bananaland-consent'),
+                esc_html(wp_get_environment_type())
+            )
+        );
+        echo '</table>';
         if (!$can_html) {
             echo '<div class="notice notice-info inline"><p>' . esc_html__('Your account cannot save raw HTML, so custom service code is read-only.', 'bananaland-consent') . '</p></div>';
         }

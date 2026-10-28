@@ -13,7 +13,7 @@ final class Settings
     public const SECTIONS = [
         'banner' => ['banner', 'colors'],
         'text' => ['texts', 'categories'],
-        'services' => ['services'],
+        'services' => ['services', 'services_live_only'],
         'settings' => ['privacy_page', 'cookie_page', 'regions', 'embeds', 'consent_mode', 'log', 'expiry', 'uninstall'],
         'import' => ['policy_version'],
     ];
@@ -38,6 +38,9 @@ final class Settings
             switch ($key) {
                 case 'policy_version':
                     $out[$key] = substr(preg_replace('/[^A-Za-z0-9._-]/', '', (string) $value), 0, 32) ?: '1';
+                    break;
+                case 'services_live_only':
+                    $out[$key] = !empty($value);
                     break;
                 case 'privacy_page':
                 case 'cookie_page':

@@ -7,6 +7,7 @@
 defined('ABSPATH') || exit;
 
 add_filter('blc_config', static function (array $config): array {
+    $config['services_live_only'] = false;
     $config['services'] = [
         ['uid' => 'e2e-ga4', 'preset' => 'ga4', 'settings' => ['id' => 'G-TEST000001']],
         ['uid' => 'e2e-meta', 'preset' => 'meta_pixel', 'settings' => ['id' => '000000000000001']],

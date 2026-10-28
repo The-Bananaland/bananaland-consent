@@ -46,6 +46,10 @@ Location comes from WP Engine GeoTarget headers or Cloudflare (`CF-IPCountry`, p
 
 **Consent → Services** has presets for Google Tag Manager, Google Analytics 4, Google Ads, Meta Pixel, LinkedIn Insight, HubSpot, Microsoft Clarity, and **Custom** (paste any snippet; requires the `unfiltered_html` capability). Each preset knows its cookies, which feed the cookie declaration and are deleted when consent is withdrawn.
 
+Services added in a theme's `consent/config.php` are listed read-only at the top of the tab, and anything added in the admin loads alongside them (the theme wins if both use the same `uid`). So a developer can ship the core tags with the code, and editors can still add marketing tags without a deploy.
+
+**Only on the live site** (on by default) skips every service unless `wp_get_environment_type()` is `production`, so local and staging copies of the database don't send visits to analytics or ad accounts.
+
 Tag Manager loads for everyone so it can receive Consent Mode signals. Google tags inside it respect consent automatically. For other tags in GTM, use a trigger on the custom event `blc_consent_update` with a condition such as `blc_marketing equals true`.
 
 ### Holding your own scripts
@@ -150,7 +154,7 @@ return [
 ];
 ```
 
-Settings resolve as: defaults ← admin ← `config.php` ← `blc_config` filter.
+Settings resolve as: defaults ← admin ← `config.php` ← `blc_config` filter. The exception is `services`: the theme's list is combined with the admin's, not swapped for it.
 
 ## Filters and actions
 

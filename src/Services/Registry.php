@@ -29,6 +29,9 @@ final class Registry
             return self::$services;
         }
         self::$services = [];
+        if (!self::runs_here()) {
+            return self::$services;
+        }
         foreach ((array) Config::get('services', []) as $index => $row) {
             $service = self::build(is_array($row) ? $row : [], (int) $index);
             if ($service) {
@@ -36,6 +39,14 @@ final class Registry
             }
         }
         return self::$services;
+    }
+
+    /**
+     * False on local and staging copies when services are limited to the live site.
+     */
+    public static function runs_here(): bool
+    {
+        return !Config::get('services_live_only', true) || wp_get_environment_type() === 'production';
     }
 
     /**

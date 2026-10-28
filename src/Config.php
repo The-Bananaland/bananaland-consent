@@ -18,8 +18,14 @@ final class Config
     public static function all(): array
     {
         if (self::$cache === null) {
-            $config = self::merge(self::defaults(), self::saved());
-            $config = self::merge($config, self::theme());
+            $saved = self::saved();
+            $theme = self::theme();
+            $config = self::merge(self::defaults(), $saved);
+            $config = self::merge($config, $theme);
+            if (isset($theme['services'])) {
+                // Theme services are added to the ones managed in the admin; the theme wins on a shared uid.
+                $config['services'] = self::combine_services((array) $theme['services'], (array) ($saved['services'] ?? []));
+            }
             /**
              * Filters the effective consent configuration.
              *
@@ -72,7 +78,27 @@ final class Config
     }
 
     /**
-     * Deep merge for associative arrays. Lists (services, cookie tables) are replaced whole.
+     * Services declared in the theme's config.php, which the admin shows read-only.
+     */
+    public static function theme_services(): array
+    {
+        return array_values(array_filter((array) (self::theme()['services'] ?? []), 'is_array'));
+    }
+
+    private static function combine_services(array $theme, array $admin): array
+    {
+        $theme = array_values(array_filter($theme, 'is_array'));
+        $taken = array_filter(array_column($theme, 'uid'));
+        foreach ($admin as $row) {
+            if (is_array($row) && !in_array($row['uid'] ?? null, $taken, true)) {
+                $theme[] = $row;
+            }
+        }
+        return $theme;
+    }
+
+    /**
+     * Deep merge for associative arrays. Lists (cookie tables, overrides) are replaced whole; services are combined in all().
      */
     public static function merge(array $base, array $over): array
     {
@@ -174,6 +200,8 @@ final class Config
                 ],
             ],
             'services' => [],
+            // Skip every service unless wp_get_environment_type() is "production".
+            'services_live_only' => true,
             'regions' => [
                 'us' => 'opt-out',
                 'other' => 'notice',

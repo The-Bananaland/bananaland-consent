@@ -13,6 +13,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         Monkey\setUp();
         Functions\stubTranslationFunctions();
         Functions\stubEscapeFunctions();
+        Functions\when('wp_get_environment_type')->justReturn('production');
     }
 
     protected function tearDown(): void
