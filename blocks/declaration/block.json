@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "bananaland/cookie-declaration",
+  "title": "Cookie declaration",
+  "category": "widgets",
+  "icon": "shield",
+  "description": "Lists consent categories, services and cookies from Bananaland Consent.",
+  "keywords": ["cookies", "privacy", "consent", "gdpr"],
+  "supports": { "html": false },
+  "textdomain": "bananaland-consent",
+  "editorScript": "file:./editor.js"
+}
