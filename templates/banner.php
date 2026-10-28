@@ -36,7 +36,9 @@ $blc_policy = $consent->policy_url();
                     <button type="button" class="blc-btn blc-btn--primary" data-blc-action="accept-all"><?php echo esc_html($consent->text($blc_mode, 'accept')); ?></button>
                 <?php elseif ($blc_mode === 'opt-out') : ?>
                     <button type="button" class="blc-btn blc-btn--secondary" data-blc-action="open-preferences"><?php echo esc_html($consent->text($blc_mode, 'customize')); ?></button>
-                    <button type="button" class="blc-btn blc-btn--primary" data-blc-action="opt-out"><?php echo esc_html($consent->text($blc_mode, 'opt_out')); ?></button>
+                    <?php if ($consent->opt_out_button()) : ?>
+                        <button type="button" class="blc-btn blc-btn--primary" data-blc-action="opt-out"><?php echo esc_html($consent->text($blc_mode, 'opt_out')); ?></button>
+                    <?php endif; ?>
                     <button type="button" class="blc-btn blc-btn--primary" data-blc-action="accept-all"><?php echo esc_html($consent->text($blc_mode, 'accept')); ?></button>
                 <?php else : ?>
                     <button type="button" class="blc-btn blc-btn--secondary" data-blc-action="open-preferences"><?php echo esc_html($consent->text($blc_mode, 'customize')); ?></button>

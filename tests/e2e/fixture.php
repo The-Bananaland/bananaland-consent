@@ -16,6 +16,9 @@ add_filter('blc_config', static function (array $config): array {
         $config['banner']['layout'] = $layout;
     }
     $config['banner']['floating_button'] = true;
+    if (!empty($_SERVER['HTTP_X_BLC_E2E_OPT_OUT_BUTTON'])) {
+        $config['banner']['opt_out_button'] = true;
+    }
     return $config;
 });
 

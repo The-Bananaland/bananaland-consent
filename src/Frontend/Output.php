@@ -72,6 +72,7 @@ final class Output
             'timezoneFallback' => (bool) Config::get('regions.timezone_fallback'),
             'layout' => (string) Config::get('banner.layout'),
             'floatingButton' => (bool) Config::get('banner.floating_button'),
+            'sharesData' => (bool) Registry::by_category('marketing'),
             'log' => (bool) Config::get('log.enabled'),
             'scan' => self::scan_mode(),
             'secure' => is_ssl(),

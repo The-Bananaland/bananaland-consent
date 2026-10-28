@@ -98,4 +98,13 @@ final class RegionsTest extends TestCase
         $_GET['blc_test_region'] = 'DE';
         $this->assertSame('DE', Resolver::resolve()['country']);
     }
+
+    public function test_us_and_other_settings_and_eu_cannot_be_loosened(): void
+    {
+        Functions\when('get_option')->justReturn(['regions' => ['us' => 'notice', 'other' => 'opt-in', 'overrides' => ['DE' => 'notice', 'CA-QC' => 'notice']]]);
+        $this->assertSame('notice', Rules::mode('US', 'CA'));
+        $this->assertSame('opt-in', Rules::mode('JP', null));
+        $this->assertSame('opt-in', Rules::mode('DE', null));
+        $this->assertSame('opt-in', Rules::mode('CA', 'QC'));
+    }
 }

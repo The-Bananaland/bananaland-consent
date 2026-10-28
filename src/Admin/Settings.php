@@ -11,11 +11,11 @@ use Bananaland\Consent\Services\Presets;
 final class Settings
 {
     public const SECTIONS = [
-        'general' => ['policy_version', 'privacy_page', 'cookie_page', 'expiry', 'consent_mode', 'embeds', 'log', 'uninstall'],
-        'banner' => ['banner', 'colors', 'texts'],
-        'categories' => ['categories'],
+        'banner' => ['banner', 'colors'],
+        'text' => ['texts', 'categories'],
         'services' => ['services'],
-        'regions' => ['regions'],
+        'settings' => ['privacy_page', 'cookie_page', 'regions', 'embeds', 'consent_mode', 'log', 'expiry', 'uninstall'],
+        'import' => ['policy_version'],
     ];
 
     /**
@@ -71,6 +71,7 @@ final class Settings
                         'position' => in_array($value['position'] ?? '', ['bottom', 'top', 'bottom-left', 'bottom-right'], true) ? $value['position'] : 'bottom',
                         'floating_button' => !empty($value['floating_button']),
                         'floating_position' => ($value['floating_position'] ?? '') === 'bottom-right' ? 'bottom-right' : 'bottom-left',
+                        'opt_out_button' => !empty($value['opt_out_button']),
                     ];
                     break;
                 case 'colors':
@@ -100,6 +101,8 @@ final class Settings
                     break;
                 case 'regions':
                     $out[$key] = [
+                        'us' => in_array($value['us'] ?? '', Config::MODES, true) ? $value['us'] : 'opt-out',
+                        'other' => in_array($value['other'] ?? '', Config::MODES, true) ? $value['other'] : 'notice',
                         'unknown_mode' => in_array($value['unknown_mode'] ?? '', Config::MODES, true) ? $value['unknown_mode'] : 'opt-in',
                         'timezone_fallback' => !empty($value['timezone_fallback']),
                         'overrides' => self::overrides($value['overrides'] ?? []),

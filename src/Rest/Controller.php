@@ -40,10 +40,6 @@ final class Controller
         $location = Resolver::resolve();
         $mode = Rules::mode($location['country'], $location['region']);
 
-        if ($location['source'] !== 'test' && get_option('blc_geo_source') !== $location['source']) {
-            update_option('blc_geo_source', $location['source'], false);
-        }
-
         $response = new WP_REST_Response([
             'country' => $location['country'],
             'region' => $location['region'],

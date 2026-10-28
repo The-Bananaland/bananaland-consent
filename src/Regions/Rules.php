@@ -29,6 +29,13 @@ final class Rules
         $country = strtoupper($country);
         $subdivision = $region ? $country . '-' . strtoupper($region) : null;
 
+        $data = self::data();
+
+        // Opt-in where the law requires it; site settings can't loosen this.
+        if (($subdivision && in_array($subdivision, $data['opt_in']['subdivisions'] ?? [], true)) || in_array($country, $data['opt_in']['countries'] ?? [], true)) {
+            return 'opt-in';
+        }
+
         $overrides = (array) Config::get('regions.overrides', []);
         if ($subdivision && isset($overrides[$subdivision])) {
             return self::valid($overrides[$subdivision], 'opt-in');
@@ -37,18 +44,13 @@ final class Rules
             return self::valid($overrides[$country], 'opt-in');
         }
 
-        $data = self::data();
-        foreach (['opt-in' => 'opt_in', 'opt-out' => 'opt_out'] as $mode => $key) {
-            if ($subdivision && in_array($subdivision, $data[$key]['subdivisions'] ?? [], true)) {
-                return $mode;
-            }
+        if ($subdivision && in_array($subdivision, $data['opt_out']['subdivisions'] ?? [], true)) {
+            return self::valid(Config::get('regions.us'), 'opt-out');
         }
-        foreach (['opt-in' => 'opt_in', 'opt-out' => 'opt_out'] as $mode => $key) {
-            if (in_array($country, $data[$key]['countries'] ?? [], true)) {
-                return $mode;
-            }
+        if (in_array($country, $data['opt_out']['countries'] ?? [], true)) {
+            return self::valid(Config::get('regions.us'), 'opt-out');
         }
-        return self::valid($data['default'] ?? 'notice', 'notice');
+        return self::valid(Config::get('regions.other', $data['default'] ?? 'notice'), 'notice');
     }
 
     private static function valid(mixed $mode, string $fallback): string

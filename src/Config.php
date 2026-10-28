@@ -97,6 +97,9 @@ final class Config
                 'position' => 'bottom', // bottom | top (bar); bottom-left | bottom-right (box)
                 'floating_button' => false,
                 'floating_position' => 'bottom-left',
+                // U.S. banner: an extra "Opt out of sale/sharing" button. Only useful when advertising
+                // services are declared; the footer link and Customize already provide the opt-out.
+                'opt_out_button' => false,
             ],
             'colors' => [
                 'background' => '#ffffff',
@@ -128,14 +131,14 @@ final class Config
             'texts' => [
                 'opt-in' => [
                     'title' => __('We value your privacy', 'bananaland-consent'),
-                    'body' => __('We use cookies and similar technologies to run this site, understand how it is used, and support our marketing. Choose which ones you allow. You can change your mind at any time from the Privacy Choices link at the bottom of every page.', 'bananaland-consent'),
+                    'body' => __('We use cookies and similar technologies to run this site, understand how it is used, and support our marketing. Choose which ones you allow. You can change your mind at any time from the link at the bottom of every page.', 'bananaland-consent'),
                     'accept' => __('Accept all', 'bananaland-consent'),
                     'reject' => __('Reject all', 'bananaland-consent'),
                     'customize' => __('Customize', 'bananaland-consent'),
                 ],
                 'opt-out' => [
-                    'title' => __('Your privacy choices', 'bananaland-consent'),
-                    'body' => __('We and our partners use cookies for analytics and advertising. Under some U.S. state laws this may be considered selling or sharing personal information, or targeted advertising. You can opt out at any time.', 'bananaland-consent'),
+                    'title' => __('Cookies on this site', 'bananaland-consent'),
+                    'body' => __('We use cookies to run this site and understand how it is used. Choose Customize to turn off the ones you do not want, or change your choices at any time from the link at the bottom of every page.', 'bananaland-consent'),
                     'accept' => __('OK', 'bananaland-consent'),
                     'opt_out' => __('Opt out of sale, sharing & targeted ads', 'bananaland-consent'),
                     'customize' => __('Customize', 'bananaland-consent'),
@@ -172,6 +175,8 @@ final class Config
             ],
             'services' => [],
             'regions' => [
+                'us' => 'opt-out',
+                'other' => 'notice',
                 'unknown_mode' => 'opt-in',
                 'timezone_fallback' => true,
                 'overrides' => [],
@@ -189,7 +194,7 @@ final class Config
             ],
             'embeds' => [
                 'enabled' => true,
-                'generic_iframes' => true,
+                'generic_iframes' => false,
             ],
             'log' => [
                 'enabled' => true,

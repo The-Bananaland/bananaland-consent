@@ -17,3 +17,22 @@
 .blc-service-row__grid .blc-wide { grid-column: 1 / -1; }
 .blc-service-row__grid [hidden] { display: none; }
 .blc-lookup { margin: 16px 0; }
+.blc-section-title { margin-top: 2em; padding-top: 1em; border-top: 1px solid #dcdcde; }
+.blc-form > .blc-section-title:first-of-type, .blc-admin > .blc-section-title:first-of-type { border-top: 0; padding-top: 0; }
+.blc-section-intro { max-width: 46rem; color: #50575e; }
+.blc-muted { color: #646970; }
+.blc-fixed { margin: 0; padding-top: 4px; }
+.blc-status { margin: 0 0 12px; }
+.blc-status li { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
+.blc-status .is-ok .dashicons { color: #008a20; }
+.blc-status .is-todo .dashicons { color: #dba617; }
+.blc-status .is-info .dashicons { color: #2271b1; }
+.blc-counts { width: 100%; border-collapse: collapse; }
+.blc-counts td { padding: 6px 0; border-bottom: 1px solid #f0f0f1; }
+.blc-counts td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.blc-details { margin: 16px 0; background: #fff; border: 1px solid #c3c4c7; }
+.blc-details > summary { padding: 12px 16px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.blc-details[open] > summary { border-bottom: 1px solid #f0f0f1; }
+.blc-details__body { padding: 0 16px 8px; }
+.blc-details__body h3 { margin-top: 1.5em; }
+.blc-tools-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }

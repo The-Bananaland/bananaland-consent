@@ -406,7 +406,8 @@
       });
     }
     document.querySelectorAll('[data-blc="preferences-link"]').forEach(function (link) {
-      var optOut = m === 'opt-out';
+      // "Your Privacy Choices" wording applies where advertising services could sell or share data.
+      var optOut = m === 'opt-out' && !!cfg.sharesData;
       var label = link.querySelector('.blc-link__label');
       var icon = link.querySelector('.blc-link__icon');
       if (label) {

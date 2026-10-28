@@ -3,23 +3,39 @@ const { test, expect, consentCookie, hit } = require('./helpers');
 test.describe('opt-out region (Connecticut)', () => {
   test.use({ region: 'US-CT' });
 
-  test('trackers load by default and the banner offers an opt-out', async ({ page, trackers }) => {
+  test('trackers load by default and the banner offers OK and Customize', async ({ page, trackers }) => {
     await page.goto('/');
-    await expect(page.locator('[data-blc="banner"] [data-blc-show-for="opt-out"]')).toBeVisible();
+    const usBanner = page.locator('[data-blc="banner"] [data-blc-show-for="opt-out"]');
+    await expect(usBanner).toBeVisible();
+    await expect(usBanner.locator('[data-blc-action="accept-all"]')).toBeVisible();
+    await expect(usBanner.locator('[data-blc-action="open-preferences"]')).toBeVisible();
+    await expect(usBanner.locator('[data-blc-action="opt-out"]')).toHaveCount(0);
     await expect.poll(() => hit(trackers, /gtag\/js/)).toBe(true);
     await expect.poll(() => hit(trackers, /fbevents/)).toBe(true);
     expect(await consentCookie(page)).toBeNull();
   });
 
-  test('opting out of sale/sharing stops marketing', async ({ page, trackers }) => {
+  test('turning off marketing under Customize stops it', async ({ page, trackers }) => {
     await page.goto('/');
-    await Promise.all([page.waitForNavigation(), page.click('[data-blc-show-for="opt-out"] [data-blc-action="opt-out"]')]);
+    await page.click('[data-blc-show-for="opt-out"] [data-blc-action="open-preferences"]');
+    await page.locator('[data-blc="toggle"][data-category="marketing"]').uncheck();
+    await Promise.all([page.waitForNavigation(), page.click('[data-blc-action="save"]')]);
     trackers.length = 0;
     await page.reload();
     await expect.poll(() => hit(trackers, /gtag\/js/)).toBe(true);
     await page.waitForTimeout(500);
     expect(hit(trackers, /fbevents/)).toBe(false);
     expect((await consentCookie(page)).c).not.toContain('marketing');
+  });
+
+  test('optional opt-out button stops marketing', async ({ page, trackers }) => {
+    await page.setExtraHTTPHeaders({ 'X-BLC-E2E': '1', 'X-BLC-Test-Region': 'US-CT', 'X-BLC-E2E-Opt-Out-Button': '1' });
+    await page.goto('/');
+    await Promise.all([page.waitForNavigation(), page.click('[data-blc-show-for="opt-out"] [data-blc-action="opt-out"]')]);
+    trackers.length = 0;
+    await page.reload();
+    await page.waitForTimeout(800);
+    expect(hit(trackers, /fbevents/)).toBe(false);
   });
 
   test('preferences link switches to "Your Privacy Choices"', async ({ page }) => {

@@ -21,8 +21,12 @@ Everything is resolved in the browser, so full-page caching (WP Engine, Cloudfla
 | Model | Where | Before a choice | Banner |
 |---|---|---|---|
 | `opt-in` | EU/EEA, UK, CH, Quebec, Brazil, and unknown locations | Only strictly necessary | Accept all / Reject all / Customize, equal weight |
-| `opt-out` | United States | Everything on | OK / Opt out of sale, sharing & targeted ads / Customize |
+| `opt-out` | United States | Everything on | OK / Customize (optional "Opt out of sale, sharing & targeted ads" button) |
 | `notice` | Everywhere else | Everything on | OK / Customize |
+
+U.S. visitors can always turn advertising off under **Customize** or from the footer link, and GPC is honored automatically, so the extra opt-out button is off by default. Turn it on (**Banner → U.S. visitors**) for sites that run advertising or retargeting pixels. The footer link reads "Your Privacy Choices" only when an advertising service is declared.
+
+The U.S. and "everywhere else" models are adjustable under **Settings**; the EU/UK opt-in rule can't be loosened, even by per-country exceptions.
 
 Location comes from WP Engine GeoTarget headers or Cloudflare (`CF-IPCountry`, plus `CF-Region-Code` with the "Add visitor location headers" managed transform). Without either, visitors fall back to the browser timezone and then to the **unknown location** setting (opt-in by default). The dashboard shows which source is in use. Rules live in `data/regions.json`; override per site under **Consent → Regions**.
 
@@ -65,7 +69,7 @@ blc_require_consent('hotjar', 'analytics');
 echo blc_embed(get_field('video'));
 ```
 
-YouTube, Vimeo, Google Maps, Spotify and (optionally) any other third-party iframe in post content are replaced automatically with a placeholder. YouTube switches to `youtube-nocookie.com`, Vimeo gets `dnt=1`, and thumbnails are fetched server-side once and served locally.
+YouTube, Vimeo, Google Maps and Spotify embeds (and, if turned on under Settings → Advanced, any other third-party iframe) in post content are replaced automatically with a placeholder. YouTube switches to `youtube-nocookie.com`, Vimeo gets `dnt=1`, and thumbnails are fetched server-side once and served locally.
 
 ### JavaScript API
 
@@ -81,7 +85,7 @@ document.addEventListener('blc:change', (e) => console.log(e.detail));
 
 ## Links and shortcodes
 
-- `<?php echo blc_preferences_link(); ?>`: footer link. In opt-out regions it reads **Your Privacy Choices** and shows the CPRA toggle icon.
+- `<?php echo blc_preferences_link(); ?>`: footer link. For U.S. visitors on sites with advertising services it reads **Your Privacy Choices** and shows the CPRA toggle icon; otherwise "Cookie preferences".
 - `[blc_preferences_link]`, or any link to `#blc-preferences`.
 - `[blc_cookie_declaration]` or the **Cookie declaration** block: categories, services and cookies, generated from your settings.
 

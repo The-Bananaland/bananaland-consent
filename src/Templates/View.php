@@ -65,6 +65,22 @@ final class View
         return in_array($position, ['bottom', 'top', 'bottom-left', 'bottom-right'], true) ? $position : 'bottom';
     }
 
+    /**
+     * Whether U.S. visitors get a first-layer "Opt out of sale/sharing" button.
+     */
+    public function opt_out_button(): bool
+    {
+        return (bool) Config::get('banner.opt_out_button', false);
+    }
+
+    /**
+     * Whether any advertising service is declared (drives the "Your Privacy Choices" link wording).
+     */
+    public function shares_data(): bool
+    {
+        return (bool) Registry::by_category('marketing');
+    }
+
     public function floating_button(): bool
     {
         return (bool) Config::get('banner.floating_button', false);

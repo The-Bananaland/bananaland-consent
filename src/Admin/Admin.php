@@ -5,7 +5,7 @@ namespace Bananaland\Consent\Admin;
 use Bananaland\Consent\Config;
 use Bananaland\Consent\ConsentLog\Repository;
 use Bananaland\Consent\Kit;
-use Bananaland\Consent\Regions\Rules;
+use Bananaland\Consent\Regions\Resolver;
 use Bananaland\Consent\Services\Presets;
 use Bananaland\Consent\Services\Registry;
 use Bananaland\Consent\Templates\Locator;
@@ -21,12 +21,11 @@ final class Admin
     public const CAP = 'manage_options';
 
     private const TABS = [
-        'dashboard' => 'Dashboard',
-        'general' => 'General',
-        'banner' => 'Banner',
-        'categories' => 'Categories',
+        'dashboard' => 'Overview',
         'services' => 'Services',
-        'regions' => 'Regions',
+        'banner' => 'Banner',
+        'text' => 'Text',
+        'settings' => 'Settings',
         'log' => 'Consent log',
         'tools' => 'Tools',
     ];
@@ -100,7 +99,7 @@ final class Admin
             $notice = sanitize_key($_GET['blc_notice']); // phpcs:ignore
             $messages = [
                 'saved' => __('Settings saved.', 'bananaland-consent'),
-                'bumped' => __('Policy version bumped. Every visitor will be asked again.', 'bananaland-consent'),
+                'bumped' => __('Done. Every visitor will see the banner again.', 'bananaland-consent'),
                 'imported' => __('Settings imported.', 'bananaland-consent'),
                 'import_failed' => __('That file is not a valid settings export.', 'bananaland-consent'),
                 'checked' => __('Checked GitHub for updates.', 'bananaland-consent'),
@@ -109,6 +108,9 @@ final class Admin
                 $class = $notice === 'import_failed' ? 'notice-error' : 'notice-success';
                 echo '<div class="notice ' . esc_attr($class) . ' is-dismissible"><p>' . esc_html($messages[$notice]) . '</p></div>';
             }
+        }
+        if (array_filter(Locator::overrides(), static fn($o) => $o['outdated'])) {
+            echo '<div class="notice notice-warning"><p>' . wp_kses_post(sprintf(__('Some of the theme\'s banner templates are older than the plugin\'s. <a href="%s">See which</a>.', 'bananaland-consent'), esc_url(self::url('tools')))) . '</p></div>';
         }
         foreach (Registry::errors() as $error) {
             echo '<div class="notice notice-warning"><p>' . esc_html($error) . '</p></div>';
@@ -131,14 +133,6 @@ final class Admin
         echo '<input type="hidden" name="action" value="blc_save">';
         echo '<input type="hidden" name="section" value="' . esc_attr($section) . '">';
         wp_nonce_field('blc_save_' . $section);
-        $locked = array_intersect(Settings::SECTIONS[$section] ?? [], array_keys(Config::theme()));
-        if ($locked) {
-            echo '<div class="notice notice-info inline"><p>' . esc_html(sprintf(
-                /* translators: %s: list of setting groups */
-                __('The theme sets these in consent/config.php, and they override what you save here: %s', 'bananaland-consent'),
-                implode(', ', $locked)
-            )) . '</p></div>';
-        }
     }
 
     private static function form_close(): void
@@ -168,6 +162,36 @@ final class Admin
         return $saved;
     }
 
+    /**
+     * Value the theme's consent/config.php sets for this path, or null when the theme leaves it alone.
+     */
+    private static function theme_value(string $path): mixed
+    {
+        $value = Config::theme();
+        foreach (explode('.', $path) as $key) {
+            if (!is_array($value) || !array_key_exists($key, $value)) {
+                return null;
+            }
+            $value = $value[$key];
+        }
+        return $value;
+    }
+
+    /**
+     * Fields the theme sets are shown read-only with the theme's value; the saved value rides along hidden.
+     */
+    private static function locked(string $path, string $field): string
+    {
+        if (self::theme_value($path) === null) {
+            return $field;
+        }
+        $saved = self::value($path);
+        $hidden = is_scalar($saved) || $saved === null ? sprintf('<input type="hidden" name="%s" value="%s">', esc_attr(self::name($path)), esc_attr((string) $saved)) : '';
+        $field = preg_replace('/\sname="[^"]*"/', '', $field);
+        $field = preg_replace('/<(input|select|textarea)\b/', '<$1 disabled', $field);
+        return $hidden . $field . ' <span class="blc-badge" title="' . esc_attr__('Set in the theme\'s consent/config.php', 'bananaland-consent') . '">' . esc_html__('Set by theme', 'bananaland-consent') . '</span>';
+    }
+
     private static function row(string $label, string $field, string $help = '', string $for = ''): void
     {
         echo '<tr><th scope="row">' . ($for ? '<label for="' . esc_attr($for) . '">' . esc_html($label) . '</label>' : esc_html($label)) . '</th><td>';
@@ -183,23 +207,31 @@ final class Admin
         return 'blc-' . str_replace(['.', '_'], '-', $path);
     }
 
+    private static function shown(string $path): mixed
+    {
+        return self::theme_value($path) ?? self::value($path);
+    }
+
     private static function text(string $path, string $class = 'regular-text'): string
     {
-        return sprintf('<input type="text" id="%s" name="%s" value="%s" class="%s">', esc_attr(self::id($path)), esc_attr(self::name($path)), esc_attr((string) self::value($path)), esc_attr($class));
+        return self::locked($path, sprintf('<input type="text" id="%s" name="%s" value="%s" class="%s">', esc_attr(self::id($path)), esc_attr(self::name($path)), esc_attr((string) self::shown($path)), esc_attr($class)));
     }
 
     private static function textarea(string $path, int $rows = 3): string
     {
-        return sprintf('<textarea id="%s" name="%s" rows="%d" class="large-text">%s</textarea>', esc_attr(self::id($path)), esc_attr(self::name($path)), $rows, esc_textarea((string) self::value($path)));
+        return self::locked($path, sprintf('<textarea id="%s" name="%s" rows="%d" class="large-text">%s</textarea>', esc_attr(self::id($path)), esc_attr(self::name($path)), $rows, esc_textarea((string) self::shown($path))));
     }
 
     private static function number(string $path, int $min, int $max): string
     {
-        return sprintf('<input type="number" id="%s" name="%s" value="%d" min="%d" max="%d" class="small-text">', esc_attr(self::id($path)), esc_attr(self::name($path)), (int) self::value($path), $min, $max);
+        return self::locked($path, sprintf('<input type="number" id="%s" name="%s" value="%d" min="%d" max="%d" class="small-text">', esc_attr(self::id($path)), esc_attr(self::name($path)), (int) self::shown($path), $min, $max));
     }
 
     private static function checkbox(string $path, string $label): string
     {
+        if (self::theme_value($path) !== null) {
+            return self::locked($path, sprintf('<label><input type="checkbox" id="%s" value="1"%s> %s</label>', esc_attr(self::id($path)), checked((bool) self::shown($path), true, false), esc_html($label)));
+        }
         return sprintf('<label><input type="hidden" name="%2$s" value="0"><input type="checkbox" id="%1$s" name="%2$s" value="1"%3$s> %4$s</label>', esc_attr(self::id($path)), esc_attr(self::name($path)), checked((bool) self::value($path), true, false), esc_html($label));
     }
 
@@ -207,26 +239,56 @@ final class Admin
     {
         $html = sprintf('<select id="%s" name="%s">', esc_attr(self::id($path)), esc_attr(self::name($path)));
         foreach ($options as $value => $label) {
-            $html .= sprintf('<option value="%s"%s>%s</option>', esc_attr($value), selected((string) self::value($path), (string) $value, false), esc_html($label));
+            $html .= sprintf('<option value="%s"%s>%s</option>', esc_attr($value), selected((string) self::shown($path), (string) $value, false), esc_html($label));
         }
-        return $html . '</select>';
+        return self::locked($path, $html . '</select>');
     }
 
     private static function page(string $path): string
     {
-        return (string) wp_dropdown_pages([
+        return self::locked($path, (string) wp_dropdown_pages([
             'name' => self::name($path),
             'id' => self::id($path),
-            'selected' => (int) self::value($path),
+            'selected' => (int) self::shown($path),
             'show_option_none' => __('— Select —', 'bananaland-consent'),
             'option_none_value' => '0',
             'echo' => false,
-        ]);
+        ]));
     }
 
     private static function color(string $path): string
     {
-        return sprintf('<input type="color" id="%s" name="%s" value="%s">', esc_attr(self::id($path)), esc_attr(self::name($path)), esc_attr((string) self::value($path)));
+        return self::locked($path, sprintf('<input type="color" id="%s" name="%s" value="%s">', esc_attr(self::id($path)), esc_attr(self::name($path)), esc_attr((string) self::shown($path))));
+    }
+
+    private static function section(string $title, string $intro = ''): void
+    {
+        echo '<h2 class="blc-section-title">' . esc_html($title) . '</h2>';
+        if ($intro) {
+            echo '<p class="blc-section-intro">' . wp_kses_post($intro) . '</p>';
+        }
+    }
+
+    /**
+     * Collapsible group for settings most sites never touch.
+     */
+    private static function details_open(string $summary, bool $open = false): void
+    {
+        echo '<details class="blc-details"' . ($open ? ' open' : '') . '><summary>' . esc_html($summary) . '</summary><div class="blc-details__body">';
+    }
+
+    private static function details_close(): void
+    {
+        echo '</div></details>';
+    }
+
+    private static function mode_options(): array
+    {
+        return [
+            'opt-in' => __('Ask first: nothing loads until they choose (opt-in)', 'bananaland-consent'),
+            'opt-out' => __('Allow, with an easy way to turn things off (opt-out)', 'bananaland-consent'),
+            'notice' => __('Just let them know (notice)', 'bananaland-consent'),
+        ];
     }
 
     /* ---------- Tabs ---------- */
@@ -235,207 +297,226 @@ final class Admin
     {
         $privacy = (int) Config::get('privacy_page') ?: (int) get_option('wp_page_for_privacy_policy');
         $services = Registry::all();
-        $geo = get_option('blc_geo_source', '');
-        $declaration = $privacy ? has_shortcode((string) get_post_field('post_content', $privacy), 'blc_cookie_declaration') || has_block('bananaland/cookie-declaration', $privacy) : false;
-        $cookie_page = (int) Config::get('cookie_page');
-        if (!$declaration && $cookie_page) {
-            $content = (string) get_post_field('post_content', $cookie_page);
-            $declaration = has_shortcode($content, 'blc_cookie_declaration') || has_block('bananaland/cookie-declaration', $cookie_page);
-        }
-
-        $checks = [
-            [$privacy > 0, __('Privacy policy page is set.', 'bananaland-consent'), self::url('general')],
-            [count($services) > 0, sprintf(_n('%d service is declared.', '%d services are declared.', count($services), 'bananaland-consent'), count($services)), self::url('services')],
-            [$declaration, __('The cookie declaration ([blc_cookie_declaration] or the Cookie declaration block) is on the privacy or cookie page.', 'bananaland-consent'), self::url('general')],
-            [in_array($geo, ['wpengine', 'cloudflare'], true), $geo === '' ? __('No visitor has been located yet. Load the site once to check geolocation.', 'bananaland-consent') : sprintf(__('Geolocation source: %s.', 'bananaland-consent'), $geo === 'none' ? __('none (enable WP Engine GeoTarget or Cloudflare location headers; until then visitors get the unknown-region model and the timezone fallback)', 'bananaland-consent') : $geo), self::url('regions')],
-            [!Registry::errors(), __('All services have valid IDs.', 'bananaland-consent'), self::url('services')],
-        ];
+        $location = Resolver::resolve();
+        $theme_services = self::theme_value('services') !== null;
 
         echo '<div class="blc-cards">';
-        echo '<section class="blc-card"><h2>' . esc_html__('Setup checklist', 'bananaland-consent') . '</h2><ul class="blc-checklist">';
-        foreach ($checks as [$ok, $label, $link]) {
-            printf('<li class="%s"><span class="dashicons %s" aria-hidden="true"></span> <a href="%s">%s</a></li>', $ok ? 'is-ok' : 'is-todo', $ok ? 'dashicons-yes-alt' : 'dashicons-warning', esc_url($link), esc_html($label));
-        }
-        echo '<li class="is-info"><span class="dashicons dashicons-info" aria-hidden="true"></span> <span>' . wp_kses_post(__('Put a link that reopens preferences in the footer: <code>&lt;?php echo blc_preferences_link(); ?&gt;</code>, the <code>[blc_preferences_link]</code> shortcode, or a menu link to <code>#blc-preferences</code>.', 'bananaland-consent')) . '</span></li>';
-        echo '</ul></section>';
 
-        echo '<section class="blc-card"><h2>' . esc_html__('Choices, last 30 days', 'bananaland-consent') . '</h2>';
+        // Status
+        echo '<section class="blc-card"><h2>' . esc_html__('Status', 'bananaland-consent') . '</h2><ul class="blc-status">';
+        if ($privacy) {
+            self::status(true, __('Privacy policy', 'bananaland-consent'), sprintf('<a href="%s">%s</a>', esc_url((string) get_permalink($privacy)), esc_html(get_the_title($privacy))));
+        } else {
+            self::status(false, __('Privacy policy', 'bananaland-consent'), sprintf('<a href="%s">%s</a>', esc_url(self::url('settings')), esc_html__('Choose the page', 'bananaland-consent')));
+        }
+
+        if ($services) {
+            $names = implode(', ', array_map(static fn($s) => $s['label'], $services));
+            self::status(true, __('Services', 'bananaland-consent'), esc_html($names) . ($theme_services ? ' <span class="blc-muted">' . esc_html__('(set by the theme)', 'bananaland-consent') . '</span>' : ''));
+        } elseif ($theme_services) {
+            self::status(true, __('Services', 'bananaland-consent'), esc_html__('Set by the theme; none load in this environment.', 'bananaland-consent'));
+        } else {
+            self::status(false, __('Services', 'bananaland-consent'), sprintf('<a href="%s">%s</a>', esc_url(self::url('services')), esc_html__('Add the trackers this site uses', 'bananaland-consent')));
+        }
+
+        $sources = ['wpengine' => 'WP Engine GeoTarget', 'cloudflare' => 'Cloudflare', 'test' => __('test override', 'bananaland-consent')];
+        if ($location['country']) {
+            self::status(true, __('Visitor location', 'bananaland-consent'), esc_html(sprintf(
+                /* translators: 1: provider, 2: country/region code */
+                __('Detected by %1$s (you appear to be in %2$s).', 'bananaland-consent'),
+                $sources[$location['source']] ?? $location['source'],
+                $location['country'] . ($location['region'] ? '-' . $location['region'] : '')
+            )));
+        } else {
+            self::status(null, __('Visitor location', 'bananaland-consent'), esc_html__('This server doesn\'t provide it (normal on a local site). Visitors are placed by their browser\'s time zone; anyone who can\'t be placed gets the "ask first" banner. On WP Engine, turn on GeoTarget, or use Cloudflare.', 'bananaland-consent'));
+        }
+        echo '</ul>';
+        echo '<p class="blc-muted">' . wp_kses_post(__('Every page needs a link that reopens these choices, usually in the footer: <code>&lt;?php echo blc_preferences_link(); ?&gt;</code> or the <code>[blc_preferences_link]</code> shortcode.', 'bananaland-consent')) . '</p>';
+        echo '</section>';
+
+        // Ask again
+        echo '<section class="blc-card"><h2>' . esc_html__('Ask everyone again', 'bananaland-consent') . '</h2>';
+        echo '<p>' . esc_html__('Shows the banner to every visitor again, including people who already chose. Do this after you change the privacy policy or start using cookies for something new.', 'bananaland-consent') . '</p>';
+        echo '<p class="blc-muted">' . esc_html__('Adding a service to a category someone already accepted asks them again automatically.', 'bananaland-consent') . '</p>';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="blc_bump_version">';
+        wp_nonce_field('blc_bump_version');
+        submit_button(__('Ask everyone again', 'bananaland-consent'), 'secondary', 'submit', false, ['onclick' => "return confirm('" . esc_js(__('Every visitor will see the banner again. Continue?', 'bananaland-consent')) . "');"]);
+        echo ' <span class="blc-muted">' . esc_html(sprintf(__('Policy version %s', 'bananaland-consent'), Config::get('policy_version'))) . '</span>';
+        echo '</form></section>';
+
+        // Choices
+        $labels = [
+            'accept-all' => __('Accepted all', 'bananaland-consent'),
+            'reject-all' => __('Rejected all', 'bananaland-consent'),
+            'custom' => __('Chose some', 'bananaland-consent'),
+            'opt-out' => __('Opted out of advertising', 'bananaland-consent'),
+            'gpc' => __('Opted out by browser signal (GPC)', 'bananaland-consent'),
+            'embed' => __('Allowed an embed', 'bananaland-consent'),
+        ];
+        echo '<section class="blc-card"><h2>' . esc_html__('Choices in the last 30 days', 'bananaland-consent') . '</h2>';
         $counts = Config::get('log.enabled') ? Repository::counts(30) : [];
         if (!$counts) {
-            echo '<p>' . esc_html__('No choices recorded yet.', 'bananaland-consent') . '</p>';
+            echo '<p class="blc-muted">' . esc_html__('No choices recorded yet. Visitors who just keep browsing in the U.S. or elsewhere don\'t count as a choice.', 'bananaland-consent') . '</p>';
         } else {
-            echo '<table class="widefat striped"><tbody>';
+            echo '<table class="blc-counts"><tbody>';
             foreach ($counts as $method => $total) {
-                echo '<tr><td>' . esc_html($method) . '</td><td>' . esc_html(number_format_i18n((int) $total)) . '</td></tr>';
+                echo '<tr><td>' . esc_html($labels[$method] ?? $method) . '</td><td>' . esc_html(number_format_i18n((int) $total)) . '</td></tr>';
             }
             echo '</tbody></table>';
         }
+        echo '<p><a href="' . esc_url(self::url('log')) . '">' . esc_html__('Look up a visitor\'s record', 'bananaland-consent') . '</a></p>';
         echo '</section>';
 
-        echo '<section class="blc-card"><h2>' . esc_html__('Theme kit', 'bananaland-consent') . '</h2>';
-        $dirs = array_filter(Kit::dirs(), static fn($d) => is_dir($d['path']));
-        if (!$dirs) {
-            echo '<p>' . esc_html__('No consent/ folder in the theme. The plugin\'s default templates and styles are in use.', 'bananaland-consent') . '</p>';
-        } else {
-            echo '<p>' . esc_html__('Kit folder:', 'bananaland-consent') . ' <code>' . esc_html(reset($dirs)['path']) . '</code></p><ul>';
-            foreach (['config.php', 'tokens.css', 'consent.css'] as $file) {
-                if (Kit::file($file)) {
-                    echo '<li><code>' . esc_html($file) . '</code></li>';
-                }
-            }
-            foreach (Locator::overrides() as $name => $info) {
-                printf(
-                    '<li><code>%s.php</code> %s</li>',
-                    esc_html($name),
-                    $info['outdated']
-                        ? '<span class="blc-badge blc-badge--warn">' . esc_html(sprintf(__('outdated: theme %1$s, plugin %2$s', 'bananaland-consent'), $info['theme_version'] ?: '?', $info['plugin_version'])) . '</span>'
-                        : '<span class="blc-badge">' . esc_html($info['theme_version']) . '</span>'
-                );
-            }
-            echo '</ul>';
-        }
-        echo '</section>';
-
-        echo '<section class="blc-card"><h2>' . esc_html__('Updates', 'bananaland-consent') . '</h2>';
-        if (GitHubUpdater::is_dev_install()) {
-            echo '<p>' . esc_html__('Development install (symlink or git checkout): automatic updates are off.', 'bananaland-consent') . '</p>';
-        } else {
-            $release = GitHubUpdater::latest_release();
-            echo '<p>' . esc_html(sprintf(__('Installed %1$s. Latest release: %2$s.', 'bananaland-consent'), BLC_VERSION, $release['version'] ?? __('unknown', 'bananaland-consent'))) . '</p>';
-            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="blc_check_updates">';
-            wp_nonce_field('blc_check_updates');
-            submit_button(__('Check now', 'bananaland-consent'), 'secondary', 'submit', false);
-            echo '</form>';
-        }
-        echo '</section>';
         echo '</div>';
     }
 
-    private static function tab_general(): void
+    private static function status(?bool $ok, string $label, string $html): void
     {
-        self::form_open('general');
-        echo '<h2>' . esc_html__('Policy', 'bananaland-consent') . '</h2><table class="form-table">';
-        self::row(__('Policy version', 'bananaland-consent'), self::text('policy_version', 'small-text'), __('Changing this asks every visitor again. Use the button below after a material change to your privacy policy or cookie use.', 'bananaland-consent'), self::id('policy_version'));
-        self::row(__('Privacy policy page', 'bananaland-consent'), self::page('privacy_page'), __('Falls back to the page set in Settings → Privacy.', 'bananaland-consent'), self::id('privacy_page'));
-        self::row(__('Cookie page', 'bananaland-consent'), self::page('cookie_page'), __('Optional page holding the [blc_cookie_declaration] list.', 'bananaland-consent'), self::id('cookie_page'));
-        echo '</table>';
-
-        echo '<h2>' . esc_html__('How long choices last', 'bananaland-consent') . '</h2><table class="form-table">';
-        self::row(__('Opt-in regions (days)', 'bananaland-consent'), self::number('expiry.opt-in', 1, 395), __('Six months (182 days) is the common EU guidance; 13 months is the usual maximum.', 'bananaland-consent'));
-        self::row(__('Opt-out regions (days)', 'bananaland-consent'), self::number('expiry.opt-out', 1, 395));
-        self::row(__('Notice-only regions (days)', 'bananaland-consent'), self::number('expiry.notice', 1, 395));
-        echo '</table>';
-
-        echo '<h2>' . esc_html__('Google Consent Mode v2', 'bananaland-consent') . '</h2><table class="form-table">';
-        self::row(__('Consent Mode', 'bananaland-consent'), self::checkbox('consent_mode.enabled', __('Send consent defaults and updates to Google tags', 'bananaland-consent')));
-        self::row(__('Implementation', 'bananaland-consent'), self::select('consent_mode.mode', ['basic' => __('Basic: Google tags load only after consent', 'bananaland-consent'), 'advanced' => __('Advanced: Google tags load before consent and send cookieless pings', 'bananaland-consent')]), __('Basic is the stricter choice. Advanced lets Google model conversions for visitors who decline; check that your privacy policy covers it.', 'bananaland-consent'), self::id('consent_mode.mode'));
-        self::row(__('Ads data redaction', 'bananaland-consent'), self::checkbox('consent_mode.ads_data_redaction', __('Redact ad click identifiers when ad storage is denied', 'bananaland-consent')));
-        self::row(__('URL passthrough', 'bananaland-consent'), self::checkbox('consent_mode.url_passthrough', __('Pass ad click information through URLs when cookies are denied', 'bananaland-consent')));
-        echo '</table>';
-
-        echo '<h2>' . esc_html__('Embeds', 'bananaland-consent') . '</h2><table class="form-table">';
-        self::row(__('Click-to-load', 'bananaland-consent'), self::checkbox('embeds.enabled', __('Replace YouTube, Vimeo, Maps and Spotify embeds with a placeholder until allowed', 'bananaland-consent')));
-        self::row(__('Other iframes', 'bananaland-consent'), self::checkbox('embeds.generic_iframes', __('Also hold any other third-party iframe in post content', 'bananaland-consent')));
-        echo '</table>';
-
-        echo '<h2>' . esc_html__('Consent records', 'bananaland-consent') . '</h2><table class="form-table">';
-        self::row(__('Record choices', 'bananaland-consent'), self::checkbox('log.enabled', __('Store each choice as proof of consent (consent ID, categories, hashed and truncated IP)', 'bananaland-consent')));
-        self::row(__('Keep records for (days)', 'bananaland-consent'), self::number('log.retention_days', 30, 3650));
-        self::row(__('On uninstall', 'bananaland-consent'), self::checkbox('uninstall.delete_data', __('Delete settings and consent records when the plugin is deleted', 'bananaland-consent')));
-        echo '</table>';
-        self::form_close();
-
-        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="blc_bump_version">';
-        wp_nonce_field('blc_bump_version');
-        submit_button(__('Bump policy version and ask everyone again', 'bananaland-consent'), 'secondary');
-        echo '</form>';
+        $icon = $ok === true ? 'dashicons-yes-alt' : ($ok === false ? 'dashicons-warning' : 'dashicons-info-outline');
+        $class = $ok === true ? 'is-ok' : ($ok === false ? 'is-todo' : 'is-info');
+        printf('<li class="%s"><span class="dashicons %s" aria-hidden="true"></span><span><strong>%s</strong><br>%s</span></li>', esc_attr($class), esc_attr($icon), esc_html($label), $html); // phpcs:ignore WordPress.Security.EscapeOutput -- $html is escaped by callers.
     }
 
     private static function tab_banner(): void
     {
         self::form_open('banner');
-        echo '<h2>' . esc_html__('Layout', 'bananaland-consent') . '</h2><table class="form-table">';
-        self::row(__('Layout', 'bananaland-consent'), self::select('banner.layout', ['bar' => __('Bar', 'bananaland-consent'), 'box' => __('Box (corner)', 'bananaland-consent'), 'modal' => __('Modal (opt-in regions only; a bar elsewhere)', 'bananaland-consent')]), '', self::id('banner.layout'));
-        self::row(__('Position', 'bananaland-consent'), self::select('banner.position', ['bottom' => __('Bottom', 'bananaland-consent'), 'top' => __('Top (bar)', 'bananaland-consent'), 'bottom-left' => __('Bottom left (box)', 'bananaland-consent'), 'bottom-right' => __('Bottom right (box)', 'bananaland-consent')]), '', self::id('banner.position'));
-        self::row(__('Floating button', 'bananaland-consent'), self::checkbox('banner.floating_button', __('Show a small button that reopens preferences after a choice', 'bananaland-consent')) . ' ' . self::select('banner.floating_position', ['bottom-left' => __('Bottom left', 'bananaland-consent'), 'bottom-right' => __('Bottom right', 'bananaland-consent')]));
-        echo '</table>';
-
-        echo '<h2>' . esc_html__('Colors', 'bananaland-consent') . '</h2>';
-        if (Kit::file('consent.css') || Kit::file('tokens.css')) {
-            echo '<p class="description">' . esc_html__('The theme kit styles the banner, so these colors may have no effect.', 'bananaland-consent') . '</p>';
-        }
+        self::section(__('Layout', 'bananaland-consent'));
         echo '<table class="form-table">';
-        $labels = [
-            'background' => __('Background', 'bananaland-consent'),
-            'text' => __('Text', 'bananaland-consent'),
-            'primary_bg' => __('Primary button', 'bananaland-consent'),
-            'primary_text' => __('Primary button text', 'bananaland-consent'),
-            'secondary_bg' => __('Secondary button', 'bananaland-consent'),
-            'secondary_text' => __('Secondary button text', 'bananaland-consent'),
-            'accent' => __('Accent (switches, focus)', 'bananaland-consent'),
-        ];
-        foreach ($labels as $key => $label) {
-            self::row($label, self::color("colors.$key"), '', self::id("colors.$key"));
-        }
+        self::row(__('Style', 'bananaland-consent'), self::select('banner.layout', ['bar' => __('Bar across the page', 'bananaland-consent'), 'box' => __('Box in a corner', 'bananaland-consent'), 'modal' => __('Pop-up in the middle (EU/UK visitors only; a bar for everyone else)', 'bananaland-consent')]), '', self::id('banner.layout'));
+        self::row(__('Position', 'bananaland-consent'), self::select('banner.position', ['bottom' => __('Bottom', 'bananaland-consent'), 'top' => __('Top (bar only)', 'bananaland-consent'), 'bottom-left' => __('Bottom left (box only)', 'bananaland-consent'), 'bottom-right' => __('Bottom right (box only)', 'bananaland-consent')]), '', self::id('banner.position'));
+        self::row(__('Floating button', 'bananaland-consent'), self::checkbox('banner.floating_button', __('After a choice, keep a small cookie button on screen that reopens the choices', 'bananaland-consent')) . '<br>' . self::select('banner.floating_position', ['bottom-left' => __('Bottom left', 'bananaland-consent'), 'bottom-right' => __('Bottom right', 'bananaland-consent')]), __('Only needed if the footer has no privacy choices link.', 'bananaland-consent'));
         echo '</table>';
-        $pairs = [
-            [__('Text on background', 'bananaland-consent'), 'text', 'background', 4.5],
-            [__('Primary button', 'bananaland-consent'), 'primary_text', 'primary_bg', 4.5],
-            [__('Secondary button', 'bananaland-consent'), 'secondary_text', 'secondary_bg', 4.5],
-            [__('Accent on background', 'bananaland-consent'), 'accent', 'background', 3.0],
-        ];
-        foreach ($pairs as [$label, $fg, $bg, $min]) {
-            $ratio = Settings::contrast((string) self::value("colors.$fg"), (string) self::value("colors.$bg"));
-            if ($ratio < $min) {
-                echo '<div class="notice notice-warning inline"><p>' . esc_html(sprintf(__('%1$s contrast is %2$s:1; WCAG AA needs %3$s:1.', 'bananaland-consent'), $label, $ratio, $min)) . '</p></div>';
-            }
-        }
 
-        $groups = [
-            'opt-in' => __('Opt-in regions (EU, UK, etc.)', 'bananaland-consent'),
-            'opt-out' => __('Opt-out regions (U.S. states)', 'bananaland-consent'),
-            'notice' => __('Notice-only regions', 'bananaland-consent'),
-            'preferences' => __('Preferences panel', 'bananaland-consent'),
-            'links' => __('Links', 'bananaland-consent'),
-            'embed' => __('Embed placeholders', 'bananaland-consent'),
-        ];
-        foreach ($groups as $group => $heading) {
-            echo '<h2>' . esc_html($heading) . '</h2><table class="form-table">';
-            foreach (array_keys(Config::defaults()['texts'][$group]) as $key) {
-                $path = "texts.$group.$key";
-                $field = in_array($key, ['body', 'intro', 'gpc_notice'], true) ? self::textarea($path) : self::text($path, 'large-text');
-                self::row(ucwords(str_replace('_', ' ', $key)), $field, $group === 'embed' && $key === 'body' ? __('%s is replaced with the provider name.', 'bananaland-consent') : '', self::id($path));
+        self::section(__('U.S. visitors', 'bananaland-consent'));
+        echo '<table class="form-table">';
+        self::row(
+            __('Opt-out button', 'bananaland-consent'),
+            self::checkbox('banner.opt_out_button', __('Add an "Opt out of sale, sharing & targeted ads" button to the U.S. banner', 'bananaland-consent')),
+            __('Leave this off unless the site runs advertising or retargeting pixels (Meta, LinkedIn, Google Ads). Without it, U.S. visitors see <strong>OK</strong> and <strong>Customize</strong>, can turn advertising off under Customize or from the footer link, and browser privacy signals (GPC) are still honored automatically.', 'bananaland-consent')
+        );
+        echo '</table>';
+
+        self::section(__('Colors', 'bananaland-consent'));
+        if (Kit::file('consent.css') || Kit::file('tokens.css')) {
+            echo '<p class="blc-section-intro">' . esc_html__('This theme styles the banner itself (consent/tokens.css), so colors are set there rather than here.', 'bananaland-consent') . '</p>';
+        } else {
+            echo '<table class="form-table">';
+            $labels = [
+                'background' => __('Background', 'bananaland-consent'),
+                'text' => __('Text', 'bananaland-consent'),
+                'primary_bg' => __('Main buttons', 'bananaland-consent'),
+                'primary_text' => __('Main button text', 'bananaland-consent'),
+                'secondary_bg' => __('Other buttons', 'bananaland-consent'),
+                'secondary_text' => __('Other button text', 'bananaland-consent'),
+                'accent' => __('Switches and focus outline', 'bananaland-consent'),
+            ];
+            foreach ($labels as $key => $label) {
+                self::row($label, self::color("colors.$key"), '', self::id("colors.$key"));
             }
             echo '</table>';
+            $pairs = [
+                [__('Text', 'bananaland-consent'), 'text', 'background', 4.5],
+                [__('Main buttons', 'bananaland-consent'), 'primary_text', 'primary_bg', 4.5],
+                [__('Other buttons', 'bananaland-consent'), 'secondary_text', 'secondary_bg', 4.5],
+                [__('Switches', 'bananaland-consent'), 'accent', 'background', 3.0],
+            ];
+            foreach ($pairs as [$label, $fg, $bg, $min]) {
+                $ratio = Settings::contrast((string) self::value("colors.$fg"), (string) self::value("colors.$bg"));
+                if ($ratio < $min) {
+                    echo '<div class="notice notice-warning inline"><p>' . esc_html(sprintf(__('%1$s: contrast is %2$s:1, below the %3$s:1 accessibility minimum.', 'bananaland-consent'), $label, $ratio, $min)) . '</p></div>';
+                }
+            }
         }
         self::form_close();
     }
 
-    private static function tab_categories(): void
+    private static function tab_text(): void
     {
-        self::form_open('categories');
-        echo '<p>' . esc_html__('Category keys are fixed so services and Google Consent Mode stay mapped correctly. You can rename and describe them.', 'bananaland-consent') . '</p>';
+        self::form_open('text');
+        echo '<p class="blc-section-intro">' . esc_html__('The defaults are written to be compliant. Change them if you need to, and have the client\'s counsel review any edits.', 'bananaland-consent') . '</p>';
+
+        $labels = [
+            'title' => __('Heading', 'bananaland-consent'),
+            'body' => __('Message', 'bananaland-consent'),
+            'accept' => __('Accept button', 'bananaland-consent'),
+            'reject' => __('Reject button', 'bananaland-consent'),
+            'customize' => __('Customize button', 'bananaland-consent'),
+            'opt_out' => __('Opt-out button (if turned on under Banner)', 'bananaland-consent'),
+            'intro' => __('Introduction', 'bananaland-consent'),
+            'save' => __('Save button', 'bananaland-consent'),
+            'close' => __('Close button (screen readers)', 'bananaland-consent'),
+            'always_active' => __('"Always on" label', 'bananaland-consent'),
+            'services' => __('"Services" label', 'bananaland-consent'),
+            'gpc_notice' => __('Message when the browser sends a privacy signal (GPC)', 'bananaland-consent'),
+            'consent_id' => __('"Consent ID" label', 'bananaland-consent'),
+            'policy_link' => __('Privacy policy link', 'bananaland-consent'),
+            'cookie_link' => __('Cookie list link', 'bananaland-consent'),
+            'load_once' => __('"Load once" button', 'bananaland-consent'),
+            'always' => __('"Always allow" button', 'bananaland-consent'),
+        ];
+        $groups = [
+            'opt-in' => __('Banner for EU, UK and similar visitors (ask first)', 'bananaland-consent'),
+            'opt-out' => __('Banner for U.S. visitors', 'bananaland-consent'),
+            'notice' => __('Banner for everyone else', 'bananaland-consent'),
+            'preferences' => __('Customize panel', 'bananaland-consent'),
+            'links' => __('Footer link', 'bananaland-consent'),
+            'embed' => __('Video and map placeholders', 'bananaland-consent'),
+        ];
+        $first = true;
+        foreach ($groups as $group => $heading) {
+            self::details_open($heading, $first);
+            $first = false;
+            echo '<table class="form-table">';
+            foreach (array_keys(Config::defaults()['texts'][$group]) as $key) {
+                $path = "texts.$group.$key";
+                $label = $labels[$key] ?? $key;
+                $help = '';
+                if ($group === 'links') {
+                    $label = $key === 'preferences' ? __('Link text', 'bananaland-consent') : __('Link text for U.S. visitors when advertising services are used', 'bananaland-consent');
+                }
+                if ($group === 'embed' && $key === 'body') {
+                    $help = __('%s becomes the provider name, e.g. YouTube.', 'bananaland-consent');
+                }
+                $field = in_array($key, ['body', 'intro', 'gpc_notice'], true) ? self::textarea($path) : self::text($path, 'large-text');
+                self::row($label, $field, $help, self::id($path));
+            }
+            echo '</table>';
+            self::details_close();
+        }
+
+        self::details_open(__('Categories', 'bananaland-consent'));
         echo '<table class="form-table">';
         foreach (Config::CATEGORIES as $category) {
-            self::row(
-                sprintf('%s (%s)', (string) self::value("categories.$category.label"), $category),
-                self::text("categories.$category.label") . '<br><br>' . self::textarea("categories.$category.description"),
-                '',
-                self::id("categories.$category.label")
-            );
+            self::row((string) self::value("categories.$category.label"), self::text("categories.$category.label") . '<br><br>' . self::textarea("categories.$category.description"), '', self::id("categories.$category.label"));
         }
         echo '</table>';
+        self::details_close();
         self::form_close();
     }
 
     private static function tab_services(): void
     {
-        self::form_open('services');
         $presets = Presets::all();
+        if (self::theme_value('services') !== null) {
+            self::section(__('Services', 'bananaland-consent'), __('This theme manages its services in code (<code>consent/config.php</code>), so they can\'t be edited here.', 'bananaland-consent'));
+            $services = Registry::all();
+            if (!$services) {
+                echo '<p>' . esc_html__('None load in this environment. Themes usually limit trackers to the live site.', 'bananaland-consent') . '</p>';
+            } else {
+                echo '<table class="widefat striped"><thead><tr><th>' . esc_html__('Service', 'bananaland-consent') . '</th><th>' . esc_html__('ID', 'bananaland-consent') . '</th><th>' . esc_html__('Category', 'bananaland-consent') . '</th></tr></thead><tbody>';
+                foreach ($services as $s) {
+                    printf('<tr><td>%s</td><td><code>%s</code></td><td>%s</td></tr>', esc_html($s['label']), esc_html((string) ($s['settings']['id'] ?? '')), esc_html((string) Config::get("categories.{$s['category']}.label")));
+                }
+                echo '</tbody></table>';
+            }
+            return;
+        }
+
+        self::form_open('services');
         $rows = (array) self::value('services');
         $can_html = current_user_can('unfiltered_html');
 
-        echo '<p>' . esc_html__('Add each tracker or third-party tool the site uses. Scripts load only after the visitor allows their category.', 'bananaland-consent') . '</p>';
+        echo '<p class="blc-section-intro">' . esc_html__('Add each tracker or outside tool the site uses. Each one only loads once the visitor allows its category.', 'bananaland-consent') . '</p>';
         if (!$can_html) {
             echo '<div class="notice notice-info inline"><p>' . esc_html__('Your account cannot save raw HTML, so custom service code is read-only.', 'bananaland-consent') . '</p></div>';
         }
@@ -448,7 +529,6 @@ final class Admin
         self::service_row('__INDEX__', ['preset' => 'ga4', 'enabled' => true], $presets, $can_html);
         echo '</template>';
         echo '<p><button type="button" class="button" data-blc-add-service>' . esc_html__('Add service', 'bananaland-consent') . '</button></p>';
-        echo '<p class="description">' . esc_html__('Theme and plugin scripts can be held too: blc_require_consent( $handle, $category ) or <script type="text/plain" data-consent="analytics">.', 'bananaland-consent') . '</p>';
         self::form_close();
     }
 
@@ -519,34 +599,72 @@ final class Admin
         <?php
     }
 
-    private static function tab_regions(): void
+    private static function tab_settings(): void
     {
-        self::form_open('regions');
-        $data = Rules::data();
-        $overrides = (array) self::value('regions.overrides');
-        $lines = implode("\n", array_map(static fn($code, $mode) => "$code = $mode", array_keys($overrides), $overrides));
-        $modes = ['opt-in' => __('Opt-in (consent required first)', 'bananaland-consent'), 'opt-out' => __('Opt-out (on by default, easy opt-out, GPC honored)', 'bananaland-consent'), 'notice' => __('Notice only', 'bananaland-consent')];
+        self::form_open('settings');
 
+        self::section(__('Pages', 'bananaland-consent'));
         echo '<table class="form-table">';
-        self::row(__('Unknown location', 'bananaland-consent'), self::select('regions.unknown_mode', $modes), __('Used when the host provides no location and the timezone gives no clear answer. Opt-in is the safe default.', 'bananaland-consent'), self::id('regions.unknown_mode'));
-        self::row(__('Timezone fallback', 'bananaland-consent'), self::checkbox('regions.timezone_fallback', __('When the host provides no location, use the browser timezone (Europe → opt-in, U.S. → opt-out)', 'bananaland-consent')));
+        self::row(__('Privacy policy', 'bananaland-consent'), self::page('privacy_page'), __('Linked from the banner. Defaults to the page chosen under Settings → Privacy.', 'bananaland-consent'), self::id('privacy_page'));
+        self::row(__('Cookie list', 'bananaland-consent'), self::page('cookie_page'), __('Optional. Privacy laws expect you to list the cookies the site uses. Add the <strong>Cookie declaration</strong> block (or <code>[blc_cookie_declaration]</code>) to your privacy policy or a separate page and it builds that list from your services automatically. If it\'s a separate page, choose it here so the Customize panel links to it.', 'bananaland-consent'), self::id('cookie_page'));
+        echo '</table>';
+
+        self::section(__('Which banner visitors see', 'bananaland-consent'), __('Based on where the visitor is. The defaults match what each law requires.', 'bananaland-consent'));
+        echo '<table class="form-table">';
+        self::row(__('EU, EEA, UK, Switzerland, Quebec, Brazil', 'bananaland-consent'), '<p class="blc-fixed">' . esc_html__('Ask first (opt-in). Required by law, so it can\'t be changed.', 'bananaland-consent') . '</p>');
+        self::row(__('United States', 'bananaland-consent'), self::select('regions.us', self::mode_options()), __('State privacy laws allow tracking by default as long as visitors can turn it off and browser privacy signals are honored.', 'bananaland-consent'), self::id('regions.us'));
+        self::row(__('Everywhere else', 'bananaland-consent'), self::select('regions.other', self::mode_options()), '', self::id('regions.other'));
+        self::row(__('Location unknown', 'bananaland-consent'), self::select('regions.unknown_mode', self::mode_options()), __('When neither the server nor the browser\'s time zone tells us where someone is. "Ask first" is the safe choice.', 'bananaland-consent'), self::id('regions.unknown_mode'));
+        echo '</table>';
+
+        self::details_open(__('Exceptions for specific countries or states', 'bananaland-consent'));
+        $overrides = (array) (self::theme_value('regions.overrides') ?? self::value('regions.overrides'));
+        $lines = implode("\n", array_map(static fn($code, $mode) => "$code = $mode", array_keys($overrides), $overrides));
+        echo '<table class="form-table">';
         self::row(
-            __('Overrides', 'bananaland-consent'),
-            sprintf('<textarea id="%s" name="%s" rows="5" class="large-text code">%s</textarea>', esc_attr(self::id('regions.overrides')), esc_attr(self::name('regions.overrides')), esc_textarea($lines)),
-            __('One per line, e.g. <code>US = opt-in</code> or <code>CA-ON = opt-in</code>. Subdivisions use ISO 3166-2 codes.', 'bananaland-consent'),
+            __('Exceptions', 'bananaland-consent'),
+            self::locked('regions.overrides', sprintf('<textarea id="%s" name="%s" rows="4" class="large-text code" placeholder="CA = opt-in&#10;US-TX = notice">%s</textarea>', esc_attr(self::id('regions.overrides')), esc_attr(self::name('regions.overrides')), esc_textarea($lines))),
+            __('Rarely needed. Give one country or state a different banner, one per line: a country or state code, <code>=</code>, then <code>opt-in</code>, <code>opt-out</code> or <code>notice</code>. Example: <code>CA = opt-in</code> asks all of Canada first; <code>US-TX = notice</code> gives Texas a plain notice. Exceptions can\'t loosen the EU/UK rule above.', 'bananaland-consent'),
             self::id('regions.overrides')
         );
+        self::row(__('Time zone fallback', 'bananaland-consent'), self::checkbox('regions.timezone_fallback', __('If the server can\'t tell, use the browser\'s time zone (Europe → ask first, U.S. → opt-out)', 'bananaland-consent')));
         echo '</table>';
-        self::form_close();
+        self::details_close();
 
-        echo '<h2>' . esc_html__('Built-in rules', 'bananaland-consent') . '</h2>';
-        echo '<p>' . esc_html(sprintf(__('Rules updated %s. Plugin updates keep them current.', 'bananaland-consent'), $data['updated'] ?? '')) . '</p>';
-        echo '<table class="widefat striped"><tbody>';
-        echo '<tr><th>' . esc_html__('Opt-in', 'bananaland-consent') . '</th><td><code>' . esc_html(implode(' ', array_merge($data['opt_in']['countries'] ?? [], $data['opt_in']['subdivisions'] ?? []))) . '</code></td></tr>';
-        echo '<tr><th>' . esc_html__('Opt-out', 'bananaland-consent') . '</th><td><code>' . esc_html(implode(' ', $data['opt_out']['countries'] ?? [])) . '</code> ' . esc_html__('(every U.S. state gets the opt-out model; states with comprehensive privacy laws:', 'bananaland-consent') . ' <code>' . esc_html(implode(' ', $data['us_privacy_states'] ?? [])) . '</code>)</td></tr>';
-        echo '<tr><th>' . esc_html__('Everywhere else', 'bananaland-consent') . '</th><td>' . esc_html($data['default'] ?? 'notice') . '</td></tr>';
-        echo '<tr><th>' . esc_html__('Geolocation source', 'bananaland-consent') . '</th><td>' . esc_html(get_option('blc_geo_source', '') ?: __('not seen yet', 'bananaland-consent')) . '</td></tr>';
-        echo '</tbody></table>';
+        self::section(__('Embedded videos and maps', 'bananaland-consent'));
+        echo '<table class="form-table">';
+        self::row(__('Click to load', 'bananaland-consent'), self::checkbox('embeds.enabled', __('Show a placeholder for YouTube, Vimeo, Google Maps and Spotify until the visitor allows them', 'bananaland-consent')), __('These services set their own cookies, so EU/UK visitors must agree before they load. YouTube switches to its privacy-enhanced mode either way.', 'bananaland-consent'));
+        echo '</table>';
+
+        self::section(__('Consent records', 'bananaland-consent'));
+        echo '<table class="form-table">';
+        self::row(__('Keep a record', 'bananaland-consent'), self::checkbox('log.enabled', __('Save each choice so you can prove consent if asked', 'bananaland-consent')), __('Stores the choice, date, page and an anonymized IP. Nothing that identifies the visitor without their consent ID.', 'bananaland-consent'));
+        self::row(__('Keep records for', 'bananaland-consent'), self::number('log.retention_days', 30, 3650) . ' ' . esc_html__('days', 'bananaland-consent'));
+        echo '</table>';
+
+        self::details_open(__('Advanced', 'bananaland-consent'));
+        echo '<h3>' . esc_html__('Google Consent Mode', 'bananaland-consent') . '</h3><table class="form-table">';
+        self::row(__('Consent Mode', 'bananaland-consent'), self::checkbox('consent_mode.enabled', __('Tell Google tags what the visitor allowed', 'bananaland-consent')));
+        self::row(__('Before consent', 'bananaland-consent'), self::select('consent_mode.mode', ['basic' => __('Don\'t load Google tags (Basic, recommended)', 'bananaland-consent'), 'advanced' => __('Load them without cookies (Advanced)', 'bananaland-consent')]), __('Advanced lets Google estimate visits from people who decline. Check that the privacy policy covers it.', 'bananaland-consent'), self::id('consent_mode.mode'));
+        self::row(__('Ad click data', 'bananaland-consent'), self::checkbox('consent_mode.ads_data_redaction', __('Strip ad click IDs when advertising is declined', 'bananaland-consent')) . '<br>' . self::checkbox('consent_mode.url_passthrough', __('Pass ad click info through links instead of cookies', 'bananaland-consent')));
+        echo '</table>';
+
+        echo '<h3>' . esc_html__('Other iframes', 'bananaland-consent') . '</h3><table class="form-table">';
+        self::row(__('All third-party iframes', 'bananaland-consent'), self::checkbox('embeds.generic_iframes', __('Also put a placeholder in front of any other outside iframe in page content', 'bananaland-consent')), __('Off by default because it can catch forms and widgets that don\'t set cookies.', 'bananaland-consent'));
+        echo '</table>';
+
+        echo '<h3>' . esc_html__('How long a choice lasts', 'bananaland-consent') . '</h3><table class="form-table">';
+        self::row(__('Ask-first regions', 'bananaland-consent'), self::number('expiry.opt-in', 1, 395) . ' ' . esc_html__('days', 'bananaland-consent'), __('About six months is the usual EU guidance.', 'bananaland-consent'));
+        self::row(__('U.S.', 'bananaland-consent'), self::number('expiry.opt-out', 1, 395) . ' ' . esc_html__('days', 'bananaland-consent'));
+        self::row(__('Everywhere else', 'bananaland-consent'), self::number('expiry.notice', 1, 395) . ' ' . esc_html__('days', 'bananaland-consent'));
+        echo '</table>';
+
+        echo '<h3>' . esc_html__('Uninstall', 'bananaland-consent') . '</h3><table class="form-table">';
+        self::row(__('Data', 'bananaland-consent'), self::checkbox('uninstall.delete_data', __('Delete settings and consent records when the plugin is deleted', 'bananaland-consent')));
+        echo '</table>';
+        self::details_close();
+
+        self::form_close();
     }
 
     private static function tab_log(): void
@@ -582,23 +700,47 @@ final class Admin
 
     private static function tab_tools(): void
     {
-        echo '<h2>' . esc_html__('Scan the site', 'bananaland-consent') . '</h2>';
-        echo '<p>' . esc_html__('Loads a few pages as a first-time visitor who has not chosen anything, then lists cookies and third-party requests. Anything here loads before consent and should be declared as a service or removed.', 'bananaland-consent') . '</p>';
-        echo '<p><button type="button" class="button button-primary" data-blc-scan>' . esc_html__('Run scan', 'bananaland-consent') . '</button></p>';
+        self::section(__('Check the site', 'bananaland-consent'), __('Loads a few pages as a brand-new visitor who hasn\'t chosen anything and lists any cookies or outside requests that happen anyway. Anything flagged should be added under Services or removed.', 'bananaland-consent'));
+        echo '<p><button type="button" class="button button-primary" data-blc-scan>' . esc_html__('Run check', 'bananaland-consent') . '</button></p>';
         echo '<div data-blc-scan-results aria-live="polite"></div>';
 
-        echo '<h2>' . esc_html__('Export settings', 'bananaland-consent') . '</h2>';
+        self::section(__('Copy settings to another site', 'bananaland-consent'));
+        echo '<div class="blc-tools-row">';
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="blc_export">';
         wp_nonce_field('blc_export');
-        submit_button(__('Download settings JSON', 'bananaland-consent'), 'secondary', '', false);
+        submit_button(__('Download settings', 'bananaland-consent'), 'secondary', '', false);
         echo '</form>';
-
-        echo '<h2>' . esc_html__('Import settings', 'bananaland-consent') . '</h2>';
         echo '<form method="post" enctype="multipart/form-data" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="blc_import">';
         wp_nonce_field('blc_import');
-        echo '<input type="file" name="settings" accept="application/json,.json" required> ';
+        echo '<label for="blc-import-file" class="screen-reader-text">' . esc_html__('Settings file', 'bananaland-consent') . '</label><input type="file" id="blc-import-file" name="settings" accept="application/json,.json" required> ';
         submit_button(__('Import (replaces current settings)', 'bananaland-consent'), 'secondary', '', false);
-        echo '</form>';
+        echo '</form></div>';
+
+        self::section(__('Plugin updates', 'bananaland-consent'));
+        if (GitHubUpdater::is_dev_install()) {
+            echo '<p>' . esc_html(sprintf(__('Version %s. This is a development copy (symlink or git checkout), so automatic updates are off.', 'bananaland-consent'), BLC_VERSION)) . '</p>';
+        } else {
+            $release = GitHubUpdater::latest_release();
+            echo '<p>' . esc_html(sprintf(__('Version %1$s installed; latest release %2$s. Updates install automatically.', 'bananaland-consent'), BLC_VERSION, $release['version'] ?? __('unknown', 'bananaland-consent'))) . '</p>';
+            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="blc_check_updates">';
+            wp_nonce_field('blc_check_updates');
+            submit_button(__('Check now', 'bananaland-consent'), 'secondary', 'submit', false);
+            echo '</form>';
+        }
+
+        $overrides = Locator::overrides();
+        if ($overrides) {
+            self::section(__('Theme templates', 'bananaland-consent'), __('The theme replaces these banner templates with its own copies (in its consent/ folder).', 'bananaland-consent'));
+            echo '<ul class="ul-disc">';
+            foreach ($overrides as $name => $info) {
+                echo '<li><code>' . esc_html($name) . '.php</code> ';
+                echo $info['outdated']
+                    ? '<span class="blc-badge blc-badge--warn">' . esc_html(sprintf(__('needs updating: theme copy %1$s, plugin %2$s', 'bananaland-consent'), $info['theme_version'] ?: '?', $info['plugin_version'])) . '</span>'
+                    : '<span class="blc-badge">' . esc_html__('up to date', 'bananaland-consent') . '</span>';
+                echo '</li>';
+            }
+            echo '</ul>';
+        }
     }
 
     /* ---------- Handlers ---------- */
@@ -630,7 +772,7 @@ final class Admin
             }
         }
         update_option(Config::OPTION, $saved, true);
-        wp_safe_redirect(self::url($section === 'general' ? 'general' : $section, ['blc_notice' => 'saved']));
+        wp_safe_redirect(self::url($section, ['blc_notice' => 'saved']));
         exit;
     }
 
@@ -641,7 +783,7 @@ final class Admin
         $current = (string) ($saved['policy_version'] ?? '1');
         $saved['policy_version'] = ctype_digit($current) ? (string) ((int) $current + 1) : $current . '.1';
         update_option(Config::OPTION, $saved, true);
-        wp_safe_redirect(self::url('general', ['blc_notice' => 'bumped']));
+        wp_safe_redirect(self::url('dashboard', ['blc_notice' => 'bumped']));
         exit;
     }
 
@@ -689,7 +831,7 @@ final class Admin
         self::guard('blc_check_updates');
         GitHubUpdater::latest_release(true);
         delete_site_transient('update_plugins');
-        wp_safe_redirect(self::url('dashboard', ['blc_notice' => 'checked']));
+        wp_safe_redirect(self::url('tools', ['blc_notice' => 'checked']));
         exit;
     }
 
