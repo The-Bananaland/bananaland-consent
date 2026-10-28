@@ -34,6 +34,10 @@ final class Plugin
         if (is_admin()) {
             Admin::register();
         }
+
+        if (isset($_SERVER['HTTP_X_BLC_E2E']) && wp_get_environment_type() === 'local' && is_file(BLC_DIR . 'tests/e2e/fixture.php')) {
+            require BLC_DIR . 'tests/e2e/fixture.php';
+        }
     }
 
     public static function activate(): void

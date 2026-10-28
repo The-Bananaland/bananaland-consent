@@ -1,0 +1,1007 @@
+# Copyright (C) 2026 The Bananaland
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Bananaland Consent 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/bananaland-consent\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-10-28T16:57:57+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: bananaland-consent\n"
+
+#. Plugin Name of the plugin
+#: bananaland-consent.php
+msgid "Bananaland Consent"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: bananaland-consent.php
+msgid "https://github.com/The-Bananaland/bananaland-consent"
+msgstr ""
+
+#. Description of the plugin
+#: bananaland-consent.php
+#: src/Updater/GitHubUpdater.php:131
+msgid "Region-aware cookie consent, Google Consent Mode v2, Global Privacy Control and consent records."
+msgstr ""
+
+#. Author of the plugin
+#: bananaland-consent.php
+msgid "The Bananaland"
+msgstr ""
+
+#. Author URI of the plugin
+#: bananaland-consent.php
+msgid "https://thebananaland.com"
+msgstr ""
+
+#: src/Admin/Admin.php:45
+msgid "Settings"
+msgstr ""
+
+#: src/Admin/Admin.php:57
+#: src/Admin/Admin.php:97
+msgid "Consent"
+msgstr ""
+
+#: src/Admin/Admin.php:73
+msgid "Scanning…"
+msgstr ""
+
+#: src/Admin/Admin.php:74
+msgid "No undeclared cookies or third-party requests before consent."
+msgstr ""
+
+#: src/Admin/Admin.php:75
+msgid "Remove this service?"
+msgstr ""
+
+#: src/Admin/Admin.php:102
+msgid "Settings saved."
+msgstr ""
+
+#: src/Admin/Admin.php:103
+msgid "Policy version bumped. Every visitor will be asked again."
+msgstr ""
+
+#: src/Admin/Admin.php:104
+msgid "Settings imported."
+msgstr ""
+
+#: src/Admin/Admin.php:105
+msgid "That file is not a valid settings export."
+msgstr ""
+
+#: src/Admin/Admin.php:106
+msgid "Checked GitHub for updates."
+msgstr ""
+
+#. translators: %s: list of setting groups
+#: src/Admin/Admin.php:138
+#, php-format
+msgid "The theme sets these in consent/config.php, and they override what you save here: %s"
+msgstr ""
+
+#: src/Admin/Admin.php:221
+msgid "— Select —"
+msgstr ""
+
+#: src/Admin/Admin.php:247
+msgid "Privacy policy page is set."
+msgstr ""
+
+#: src/Admin/Admin.php:248
+#, php-format
+msgid "%d service is declared."
+msgid_plural "%d services are declared."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/Admin.php:249
+msgid "The cookie declaration ([blc_cookie_declaration] or the Cookie declaration block) is on the privacy or cookie page."
+msgstr ""
+
+#: src/Admin/Admin.php:250
+msgid "No visitor has been located yet. Load the site once to check geolocation."
+msgstr ""
+
+#: src/Admin/Admin.php:250
+#, php-format
+msgid "Geolocation source: %s."
+msgstr ""
+
+#: src/Admin/Admin.php:250
+msgid "none (enable WP Engine GeoTarget or Cloudflare location headers; until then visitors get the unknown-region model and the timezone fallback)"
+msgstr ""
+
+#: src/Admin/Admin.php:251
+msgid "All services have valid IDs."
+msgstr ""
+
+#: src/Admin/Admin.php:255
+msgid "Setup checklist"
+msgstr ""
+
+#: src/Admin/Admin.php:259
+msgid "Put a link that reopens preferences in the footer: <code>&lt;?php echo blc_preferences_link(); ?&gt;</code>, the <code>[blc_preferences_link]</code> shortcode, or a menu link to <code>#blc-preferences</code>."
+msgstr ""
+
+#: src/Admin/Admin.php:262
+msgid "Choices, last 30 days"
+msgstr ""
+
+#: src/Admin/Admin.php:265
+msgid "No choices recorded yet."
+msgstr ""
+
+#: src/Admin/Admin.php:275
+msgid "Theme kit"
+msgstr ""
+
+#: src/Admin/Admin.php:278
+msgid "No consent/ folder in the theme. The plugin's default templates and styles are in use."
+msgstr ""
+
+#: src/Admin/Admin.php:280
+msgid "Kit folder:"
+msgstr ""
+
+#: src/Admin/Admin.php:291
+#, php-format
+msgid "outdated: theme %1$s, plugin %2$s"
+msgstr ""
+
+#: src/Admin/Admin.php:299
+msgid "Updates"
+msgstr ""
+
+#: src/Admin/Admin.php:301
+msgid "Development install (symlink or git checkout): automatic updates are off."
+msgstr ""
+
+#: src/Admin/Admin.php:304
+#, php-format
+msgid "Installed %1$s. Latest release: %2$s."
+msgstr ""
+
+#: src/Admin/Admin.php:304
+msgid "unknown"
+msgstr ""
+
+#: src/Admin/Admin.php:307
+msgid "Check now"
+msgstr ""
+
+#: src/Admin/Admin.php:317
+#: src/Admin/Admin.php:566
+msgid "Policy"
+msgstr ""
+
+#: src/Admin/Admin.php:318
+msgid "Policy version"
+msgstr ""
+
+#: src/Admin/Admin.php:318
+msgid "Changing this asks every visitor again. Use the button below after a material change to your privacy policy or cookie use."
+msgstr ""
+
+#: src/Admin/Admin.php:319
+msgid "Privacy policy page"
+msgstr ""
+
+#: src/Admin/Admin.php:319
+msgid "Falls back to the page set in Settings → Privacy."
+msgstr ""
+
+#: src/Admin/Admin.php:320
+msgid "Cookie page"
+msgstr ""
+
+#: src/Admin/Admin.php:320
+msgid "Optional page holding the [blc_cookie_declaration] list."
+msgstr ""
+
+#: src/Admin/Admin.php:323
+msgid "How long choices last"
+msgstr ""
+
+#: src/Admin/Admin.php:324
+msgid "Opt-in regions (days)"
+msgstr ""
+
+#: src/Admin/Admin.php:324
+msgid "Six months (182 days) is the common EU guidance; 13 months is the usual maximum."
+msgstr ""
+
+#: src/Admin/Admin.php:325
+msgid "Opt-out regions (days)"
+msgstr ""
+
+#: src/Admin/Admin.php:326
+msgid "Notice-only regions (days)"
+msgstr ""
+
+#: src/Admin/Admin.php:329
+msgid "Google Consent Mode v2"
+msgstr ""
+
+#: src/Admin/Admin.php:330
+msgid "Consent Mode"
+msgstr ""
+
+#: src/Admin/Admin.php:330
+msgid "Send consent defaults and updates to Google tags"
+msgstr ""
+
+#: src/Admin/Admin.php:331
+msgid "Implementation"
+msgstr ""
+
+#: src/Admin/Admin.php:331
+msgid "Basic: Google tags load only after consent"
+msgstr ""
+
+#: src/Admin/Admin.php:331
+msgid "Advanced: Google tags load before consent and send cookieless pings"
+msgstr ""
+
+#: src/Admin/Admin.php:331
+msgid "Basic is the stricter choice. Advanced lets Google model conversions for visitors who decline; check that your privacy policy covers it."
+msgstr ""
+
+#: src/Admin/Admin.php:332
+msgid "Ads data redaction"
+msgstr ""
+
+#: src/Admin/Admin.php:332
+msgid "Redact ad click identifiers when ad storage is denied"
+msgstr ""
+
+#: src/Admin/Admin.php:333
+msgid "URL passthrough"
+msgstr ""
+
+#: src/Admin/Admin.php:333
+msgid "Pass ad click information through URLs when cookies are denied"
+msgstr ""
+
+#: src/Admin/Admin.php:336
+msgid "Embeds"
+msgstr ""
+
+#: src/Admin/Admin.php:337
+msgid "Click-to-load"
+msgstr ""
+
+#: src/Admin/Admin.php:337
+msgid "Replace YouTube, Vimeo, Maps and Spotify embeds with a placeholder until allowed"
+msgstr ""
+
+#: src/Admin/Admin.php:338
+msgid "Other iframes"
+msgstr ""
+
+#: src/Admin/Admin.php:338
+msgid "Also hold any other third-party iframe in post content"
+msgstr ""
+
+#: src/Admin/Admin.php:341
+msgid "Consent records"
+msgstr ""
+
+#: src/Admin/Admin.php:342
+msgid "Record choices"
+msgstr ""
+
+#: src/Admin/Admin.php:342
+msgid "Store each choice as proof of consent (consent ID, categories, hashed and truncated IP)"
+msgstr ""
+
+#: src/Admin/Admin.php:343
+msgid "Keep records for (days)"
+msgstr ""
+
+#: src/Admin/Admin.php:344
+msgid "On uninstall"
+msgstr ""
+
+#: src/Admin/Admin.php:344
+msgid "Delete settings and consent records when the plugin is deleted"
+msgstr ""
+
+#: src/Admin/Admin.php:350
+msgid "Bump policy version and ask everyone again"
+msgstr ""
+
+#: src/Admin/Admin.php:357
+#: src/Admin/Admin.php:358
+msgid "Layout"
+msgstr ""
+
+#: src/Admin/Admin.php:358
+msgid "Bar"
+msgstr ""
+
+#: src/Admin/Admin.php:358
+msgid "Box (corner)"
+msgstr ""
+
+#: src/Admin/Admin.php:358
+msgid "Modal (opt-in regions only; a bar elsewhere)"
+msgstr ""
+
+#: src/Admin/Admin.php:359
+msgid "Position"
+msgstr ""
+
+#: src/Admin/Admin.php:359
+msgid "Bottom"
+msgstr ""
+
+#: src/Admin/Admin.php:359
+msgid "Top (bar)"
+msgstr ""
+
+#: src/Admin/Admin.php:359
+msgid "Bottom left (box)"
+msgstr ""
+
+#: src/Admin/Admin.php:359
+msgid "Bottom right (box)"
+msgstr ""
+
+#: src/Admin/Admin.php:360
+msgid "Floating button"
+msgstr ""
+
+#: src/Admin/Admin.php:360
+msgid "Show a small button that reopens preferences after a choice"
+msgstr ""
+
+#: src/Admin/Admin.php:360
+msgid "Bottom left"
+msgstr ""
+
+#: src/Admin/Admin.php:360
+msgid "Bottom right"
+msgstr ""
+
+#: src/Admin/Admin.php:363
+msgid "Colors"
+msgstr ""
+
+#: src/Admin/Admin.php:365
+msgid "The theme kit styles the banner, so these colors may have no effect."
+msgstr ""
+
+#: src/Admin/Admin.php:369
+msgid "Background"
+msgstr ""
+
+#: src/Admin/Admin.php:370
+msgid "Text"
+msgstr ""
+
+#: src/Admin/Admin.php:371
+#: src/Admin/Admin.php:383
+msgid "Primary button"
+msgstr ""
+
+#: src/Admin/Admin.php:372
+msgid "Primary button text"
+msgstr ""
+
+#: src/Admin/Admin.php:373
+#: src/Admin/Admin.php:384
+msgid "Secondary button"
+msgstr ""
+
+#: src/Admin/Admin.php:374
+msgid "Secondary button text"
+msgstr ""
+
+#: src/Admin/Admin.php:375
+msgid "Accent (switches, focus)"
+msgstr ""
+
+#: src/Admin/Admin.php:382
+msgid "Text on background"
+msgstr ""
+
+#: src/Admin/Admin.php:385
+msgid "Accent on background"
+msgstr ""
+
+#: src/Admin/Admin.php:390
+#, php-format
+msgid "%1$s contrast is %2$s:1; WCAG AA needs %3$s:1."
+msgstr ""
+
+#: src/Admin/Admin.php:395
+msgid "Opt-in regions (EU, UK, etc.)"
+msgstr ""
+
+#: src/Admin/Admin.php:396
+msgid "Opt-out regions (U.S. states)"
+msgstr ""
+
+#: src/Admin/Admin.php:397
+msgid "Notice-only regions"
+msgstr ""
+
+#: src/Admin/Admin.php:398
+msgid "Preferences panel"
+msgstr ""
+
+#: src/Admin/Admin.php:399
+msgid "Links"
+msgstr ""
+
+#: src/Admin/Admin.php:400
+msgid "Embed placeholders"
+msgstr ""
+
+#: src/Admin/Admin.php:407
+#, php-format
+msgid "%s is replaced with the provider name."
+msgstr ""
+
+#: src/Admin/Admin.php:417
+msgid "Category keys are fixed so services and Google Consent Mode stay mapped correctly. You can rename and describe them."
+msgstr ""
+
+#: src/Admin/Admin.php:438
+msgid "Add each tracker or third-party tool the site uses. Scripts load only after the visitor allows their category."
+msgstr ""
+
+#: src/Admin/Admin.php:440
+msgid "Your account cannot save raw HTML, so custom service code is read-only."
+msgstr ""
+
+#: src/Admin/Admin.php:450
+msgid "Add service"
+msgstr ""
+
+#: src/Admin/Admin.php:451
+msgid "Theme and plugin scripts can be held too: blc_require_consent( $handle, $category ) or <script type=\"text/plain\" data-consent=\"analytics\">."
+msgstr ""
+
+#: src/Admin/Admin.php:463
+msgid "Service"
+msgstr ""
+
+#: src/Admin/Admin.php:466
+msgid "Enabled"
+msgstr ""
+
+#: src/Admin/Admin.php:467
+msgid "Type"
+msgstr ""
+
+#: src/Admin/Admin.php:473
+msgid "Category"
+msgstr ""
+
+#: src/Admin/Admin.php:479
+msgid "Remove"
+msgstr ""
+
+#: src/Admin/Admin.php:483
+msgid "ID"
+msgstr ""
+
+#: src/Admin/Admin.php:487
+msgid "Display name (optional)"
+msgstr ""
+
+#: src/Admin/Admin.php:491
+msgid "Provider"
+msgstr ""
+
+#: src/Admin/Admin.php:495
+msgid "Provider privacy policy URL"
+msgstr ""
+
+#: src/Admin/Admin.php:499
+msgid "Code for <head>"
+msgstr ""
+
+#: src/Admin/Admin.php:503
+msgid "Code for the page body"
+msgstr ""
+
+#: src/Admin/Admin.php:507
+msgid "Description shown to visitors (optional)"
+msgstr ""
+
+#: src/Admin/Admin.php:511
+msgid "Cookies (one per line: name | duration | purpose). Leave empty to use the preset list."
+msgstr ""
+
+#: src/Admin/Admin.php:528
+msgid "Opt-in (consent required first)"
+msgstr ""
+
+#: src/Admin/Admin.php:528
+msgid "Opt-out (on by default, easy opt-out, GPC honored)"
+msgstr ""
+
+#: src/Admin/Admin.php:528
+msgid "Notice only"
+msgstr ""
+
+#: src/Admin/Admin.php:531
+msgid "Unknown location"
+msgstr ""
+
+#: src/Admin/Admin.php:531
+msgid "Used when the host provides no location and the timezone gives no clear answer. Opt-in is the safe default."
+msgstr ""
+
+#: src/Admin/Admin.php:532
+msgid "Timezone fallback"
+msgstr ""
+
+#: src/Admin/Admin.php:532
+msgid "When the host provides no location, use the browser timezone (Europe → opt-in, U.S. → opt-out)"
+msgstr ""
+
+#: src/Admin/Admin.php:534
+msgid "Overrides"
+msgstr ""
+
+#: src/Admin/Admin.php:536
+msgid "One per line, e.g. <code>US = opt-in</code> or <code>CA-ON = opt-in</code>. Subdivisions use ISO 3166-2 codes."
+msgstr ""
+
+#: src/Admin/Admin.php:542
+msgid "Built-in rules"
+msgstr ""
+
+#: src/Admin/Admin.php:543
+#, php-format
+msgid "Rules updated %s. Plugin updates keep them current."
+msgstr ""
+
+#: src/Admin/Admin.php:545
+msgid "Opt-in"
+msgstr ""
+
+#: src/Admin/Admin.php:546
+msgid "Opt-out"
+msgstr ""
+
+#: src/Admin/Admin.php:546
+msgid "(every U.S. state gets the opt-out model; states with comprehensive privacy laws:"
+msgstr ""
+
+#: src/Admin/Admin.php:547
+msgid "Everywhere else"
+msgstr ""
+
+#: src/Admin/Admin.php:548
+msgid "Geolocation source"
+msgstr ""
+
+#: src/Admin/Admin.php:548
+msgid "not seen yet"
+msgstr ""
+
+#: src/Admin/Admin.php:556
+msgid "Look up a consent ID"
+msgstr ""
+
+#: src/Admin/Admin.php:558
+msgid "Search"
+msgstr ""
+
+#: src/Admin/Admin.php:564
+msgid "No records for that ID."
+msgstr ""
+
+#: src/Admin/Admin.php:566
+msgid "When (UTC)"
+msgstr ""
+
+#: src/Admin/Admin.php:566
+msgid "Method"
+msgstr ""
+
+#: src/Admin/Admin.php:566
+msgid "Categories"
+msgstr ""
+
+#: src/Admin/Admin.php:566
+msgid "Model"
+msgstr ""
+
+#: src/Admin/Admin.php:566
+msgid "Region"
+msgstr ""
+
+#: src/Admin/Admin.php:566
+msgid "Page"
+msgstr ""
+
+#: src/Admin/Admin.php:574
+msgid "Export"
+msgstr ""
+
+#: src/Admin/Admin.php:577
+msgid "From"
+msgstr ""
+
+#: src/Admin/Admin.php:577
+msgid "To"
+msgstr ""
+
+#: src/Admin/Admin.php:578
+msgid "Download CSV"
+msgstr ""
+
+#: src/Admin/Admin.php:580
+#, php-format
+msgid "Records are kept for %d days. IP addresses are truncated and hashed before storage; the log cannot identify a visitor without their consent ID."
+msgstr ""
+
+#: src/Admin/Admin.php:585
+msgid "Scan the site"
+msgstr ""
+
+#: src/Admin/Admin.php:586
+msgid "Loads a few pages as a first-time visitor who has not chosen anything, then lists cookies and third-party requests. Anything here loads before consent and should be declared as a service or removed."
+msgstr ""
+
+#: src/Admin/Admin.php:587
+msgid "Run scan"
+msgstr ""
+
+#: src/Admin/Admin.php:590
+msgid "Export settings"
+msgstr ""
+
+#: src/Admin/Admin.php:593
+msgid "Download settings JSON"
+msgstr ""
+
+#: src/Admin/Admin.php:596
+msgid "Import settings"
+msgstr ""
+
+#: src/Admin/Admin.php:600
+msgid "Import (replaces current settings)"
+msgstr ""
+
+#: src/Admin/Admin.php:609
+msgid "You are not allowed to do that."
+msgstr ""
+
+#: src/Config.php:112
+msgid "Strictly necessary"
+msgstr ""
+
+#: src/Config.php:113
+msgid "Required for the site to work, such as keeping it secure and remembering your privacy choices. These cannot be turned off."
+msgstr ""
+
+#: src/Config.php:116
+msgid "Preferences & embedded content"
+msgstr ""
+
+#: src/Config.php:117
+msgid "Remember your settings and load content hosted by other services, such as videos and maps."
+msgstr ""
+
+#: src/Config.php:120
+msgid "Analytics"
+msgstr ""
+
+#: src/Config.php:121
+msgid "Help us understand how visitors use the site so we can improve it."
+msgstr ""
+
+#: src/Config.php:124
+msgid "Marketing"
+msgstr ""
+
+#: src/Config.php:125
+msgid "Used by advertising partners to measure campaigns and show relevant ads on other sites. Under some U.S. state laws this may be considered selling or sharing personal information, or targeted advertising."
+msgstr ""
+
+#: src/Config.php:130
+msgid "We value your privacy"
+msgstr ""
+
+#: src/Config.php:131
+msgid "We use cookies and similar technologies to run this site, understand how it is used, and support our marketing. Choose which ones you allow. You can change your mind at any time from the Privacy Choices link at the bottom of every page."
+msgstr ""
+
+#: src/Config.php:132
+#: src/Config.php:153
+msgid "Accept all"
+msgstr ""
+
+#: src/Config.php:133
+#: src/Config.php:154
+msgid "Reject all"
+msgstr ""
+
+#: src/Config.php:134
+#: src/Config.php:141
+#: src/Config.php:147
+msgid "Customize"
+msgstr ""
+
+#: src/Config.php:137
+msgid "Your privacy choices"
+msgstr ""
+
+#: src/Config.php:138
+msgid "We and our partners use cookies for analytics and advertising. Under some U.S. state laws this may be considered selling or sharing personal information, or targeted advertising. You can opt out at any time."
+msgstr ""
+
+#: src/Config.php:139
+#: src/Config.php:146
+msgid "OK"
+msgstr ""
+
+#: src/Config.php:140
+msgid "Opt out of sale, sharing & targeted ads"
+msgstr ""
+
+#: src/Config.php:144
+msgid "Cookies on this site"
+msgstr ""
+
+#: src/Config.php:145
+msgid "We use cookies to run this site and to understand how it is used."
+msgstr ""
+
+#: src/Config.php:150
+msgid "Privacy preferences"
+msgstr ""
+
+#: src/Config.php:151
+msgid "Choose which categories of cookies and similar technologies you allow. Strictly necessary cookies are always on."
+msgstr ""
+
+#: src/Config.php:152
+msgid "Save choices"
+msgstr ""
+
+#: src/Config.php:155
+msgid "Close"
+msgstr ""
+
+#: src/Config.php:156
+msgid "Always active"
+msgstr ""
+
+#: src/Config.php:157
+msgid "Services"
+msgstr ""
+
+#: src/Config.php:158
+msgid "Your browser sent a Global Privacy Control signal. We have honored it by opting you out of the sale or sharing of personal information and targeted advertising."
+msgstr ""
+
+#: src/Config.php:159
+msgid "Your consent ID"
+msgstr ""
+
+#: src/Config.php:160
+#: templates/service-row.php:17
+msgid "Privacy policy"
+msgstr ""
+
+#: src/Config.php:161
+msgid "Cookie list"
+msgstr ""
+
+#: src/Config.php:164
+msgid "Cookie preferences"
+msgstr ""
+
+#: src/Config.php:165
+msgid "Your Privacy Choices"
+msgstr ""
+
+#: src/Config.php:168
+#, php-format
+msgid "This content is hosted by %s, which may set cookies and collect data about your visit."
+msgstr ""
+
+#: src/Config.php:169
+msgid "Load once"
+msgstr ""
+
+#: src/Config.php:170
+msgid "Always allow"
+msgstr ""
+
+#: src/Services/Presets.php:24
+msgid "Tag Manager loads for every visitor so it can receive Consent Mode signals. Tags inside it must respect consent: Google tags do this automatically; give other tags a trigger on the blc_consent_update event or a consent check."
+msgstr ""
+
+#: src/Services/Presets.php:39
+#: src/Services/Presets.php:40
+msgid "2 years"
+msgstr ""
+
+#: src/Services/Presets.php:39
+msgid "Distinguishes visitors."
+msgstr ""
+
+#: src/Services/Presets.php:40
+msgid "Keeps session state."
+msgstr ""
+
+#: src/Services/Presets.php:55
+#: src/Services/Presets.php:56
+#: src/Services/Presets.php:71
+#: src/Services/Presets.php:72
+#: src/Services/Presets.php:91
+msgid "3 months"
+msgstr ""
+
+#: src/Services/Presets.php:55
+msgid "Measures ad conversions."
+msgstr ""
+
+#: src/Services/Presets.php:56
+msgid "Stores ad click information."
+msgstr ""
+
+#: src/Services/Presets.php:71
+msgid "Identifies browsers for ad delivery and measurement."
+msgstr ""
+
+#: src/Services/Presets.php:72
+msgid "Stores the last ad click."
+msgstr ""
+
+#: src/Services/Presets.php:90
+msgid "30 days"
+msgstr ""
+
+#: src/Services/Presets.php:90
+msgid "Attributes conversions to LinkedIn ads."
+msgstr ""
+
+#: src/Services/Presets.php:91
+msgid "Browser identifier for ad measurement."
+msgstr ""
+
+#: src/Services/Presets.php:92
+#: src/Services/Presets.php:128
+msgid "1 year"
+msgstr ""
+
+#: src/Services/Presets.php:92
+msgid "Browser identifier (set on linkedin.com)."
+msgstr ""
+
+#: src/Services/Presets.php:110
+#: src/Services/Presets.php:111
+msgid "6 months"
+msgstr ""
+
+#: src/Services/Presets.php:110
+msgid "Tracks visitors."
+msgstr ""
+
+#: src/Services/Presets.php:111
+msgid "Identifies visitors for form submissions."
+msgstr ""
+
+#: src/Services/Presets.php:112
+msgid "30 minutes"
+msgstr ""
+
+#: src/Services/Presets.php:112
+msgid "Tracks sessions."
+msgstr ""
+
+#: src/Services/Presets.php:113
+msgid "Session"
+msgstr ""
+
+#: src/Services/Presets.php:113
+msgid "Detects browser restarts."
+msgstr ""
+
+#: src/Services/Presets.php:128
+msgid "Identifies visitors."
+msgstr ""
+
+#: src/Services/Presets.php:129
+msgid "1 day"
+msgstr ""
+
+#: src/Services/Presets.php:129
+msgid "Joins page views into a session recording."
+msgstr ""
+
+#: src/Services/Presets.php:142
+msgid "Custom"
+msgstr ""
+
+#: src/Services/Registry.php:93
+#, php-format
+msgid "Service %1$d uses an unknown preset \"%2$s\"."
+msgstr ""
+
+#: src/Services/Registry.php:101
+#, php-format
+msgid "%1$s: \"%2$s\" is not a valid %3$s."
+msgstr ""
+
+#: templates/banner.php:20
+msgid "Cookie consent"
+msgstr ""
+
+#: templates/declaration.php:24
+#: templates/service-row.php:23
+msgid "Cookie"
+msgstr ""
+
+#: templates/declaration.php:24
+#: templates/service-row.php:23
+msgid "Duration"
+msgstr ""
+
+#: templates/declaration.php:24
+#: templates/service-row.php:23
+msgid "Purpose"
+msgstr ""
+
+#: templates/declaration.php:25
+msgid "Up to 1 year"
+msgstr ""
+
+#: templates/declaration.php:25
+msgid "Stores your privacy choices."
+msgstr ""
+
+#: templates/declaration.php:28
+msgid "No services in this category."
+msgstr ""
+
+#: templates/service-row.php:17
+msgid "(opens in a new tab)"
+msgstr ""
+
+#: blocks/declaration/block.json
+msgctxt "block title"
+msgid "Cookie declaration"
+msgstr ""
+
+#: blocks/declaration/block.json
+msgctxt "block description"
+msgid "Lists consent categories, services and cookies from Bananaland Consent."
+msgstr ""
+
+#: blocks/declaration/block.json
+msgctxt "block keyword"
+msgid "cookies"
+msgstr ""
+
+#: blocks/declaration/block.json
+msgctxt "block keyword"
+msgid "privacy"
+msgstr ""
+
+#: blocks/declaration/block.json
+msgctxt "block keyword"
+msgid "consent"
+msgstr ""
+
+#: blocks/declaration/block.json
+msgctxt "block keyword"
+msgid "gdpr"
+msgstr ""

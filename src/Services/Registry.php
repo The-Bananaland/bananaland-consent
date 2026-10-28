@@ -98,6 +98,7 @@ final class Registry
         foreach ($preset['fields'] as $key => $field) {
             $value = trim((string) ($settings[$key] ?? ''));
             if ($value === '' || !preg_match($field['pattern'], $value)) {
+                /* translators: 1: service name, 2: entered value, 3: field label */
                 self::$errors[] = sprintf(__('%1$s: "%2$s" is not a valid %3$s.', 'bananaland-consent'), $preset['label'], $value, $field['label']);
                 return null;
             }
