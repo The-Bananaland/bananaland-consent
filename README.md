@@ -28,7 +28,7 @@ U.S. visitors can always turn advertising off under **Customize** or from the fo
 
 The U.S. and "everywhere else" models are adjustable under **Settings**; the EU/UK opt-in rule can't be loosened, even by per-country exceptions.
 
-Location comes from WP Engine GeoTarget headers or Cloudflare (`CF-IPCountry`, plus `CF-Region-Code` with the "Add visitor location headers" managed transform). Without either, visitors fall back to the browser timezone and then to the **unknown location** setting (opt-in by default). The dashboard shows which source is in use. Rules live in `data/regions.json`; override per site under **Consent → Regions**.
+Location comes from WP Engine GeoTarget headers or Cloudflare (`CF-IPCountry`, plus `CF-Region-Code` with the "Add visitor location headers" managed transform). Without either, visitors fall back to the browser timezone and then to the **unknown location** setting (opt-in by default). The Overview tab shows which source is in use. Rules live in `data/regions.json`; per-country exceptions go under **Consent → Settings**.
 
 **Global Privacy Control**: in opt-out and notice regions, a GPC signal opts the visitor out of marketing automatically and is logged with method `gpc`. In opt-in regions nothing is on by default anyway; the preferences panel confirms the signal was seen.
 
@@ -136,7 +136,7 @@ See `assets/consent.css` for every token.
 | `data-blc="floating-button"` | Re-entry button (starts `hidden`) |
 | `data-blc-action="accept-all"` | Also `reject-all`, `opt-out`, `save`, `open-preferences`, `close`, `embed-once`, `embed-always` |
 
-Each template has an `@version` header. **Consent → Dashboard** lists theme overrides and flags ones older than the plugin's copy.
+Each template has an `@version` header. **Consent → Tools** lists theme overrides and flags ones older than the plugin's copy (with a notice on every Consent screen when one is outdated).
 
 `config.php` example:
 
