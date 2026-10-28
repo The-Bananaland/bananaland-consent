@@ -40,7 +40,7 @@ final class Controller
         $location = Resolver::resolve();
         $mode = Rules::mode($location['country'], $location['region']);
 
-        if (get_option('blc_geo_source') !== $location['source']) {
+        if ($location['source'] !== 'test' && get_option('blc_geo_source') !== $location['source']) {
             update_option('blc_geo_source', $location['source'], false);
         }
 

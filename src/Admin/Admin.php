@@ -256,7 +256,7 @@ final class Admin
         foreach ($checks as [$ok, $label, $link]) {
             printf('<li class="%s"><span class="dashicons %s" aria-hidden="true"></span> <a href="%s">%s</a></li>', $ok ? 'is-ok' : 'is-todo', $ok ? 'dashicons-yes-alt' : 'dashicons-warning', esc_url($link), esc_html($label));
         }
-        echo '<li class="is-info"><span class="dashicons dashicons-info" aria-hidden="true"></span> ' . wp_kses_post(__('Put a link that reopens preferences in the footer: <code>&lt;?php echo blc_preferences_link(); ?&gt;</code>, the <code>[blc_preferences_link]</code> shortcode, or a menu link to <code>#blc-preferences</code>.', 'bananaland-consent')) . '</li>';
+        echo '<li class="is-info"><span class="dashicons dashicons-info" aria-hidden="true"></span> <span>' . wp_kses_post(__('Put a link that reopens preferences in the footer: <code>&lt;?php echo blc_preferences_link(); ?&gt;</code>, the <code>[blc_preferences_link]</code> shortcode, or a menu link to <code>#blc-preferences</code>.', 'bananaland-consent')) . '</span></li>';
         echo '</ul></section>';
 
         echo '<section class="blc-card"><h2>' . esc_html__('Choices, last 30 days', 'bananaland-consent') . '</h2>';
